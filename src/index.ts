@@ -442,3 +442,5 @@ export const generateRandomColorRampParams = {
     props: { min: 0, max: 1, step: 0.001 },
   },
 };
+
+export { generateFromColor, resolveFromColor } from "./generateFromColor";

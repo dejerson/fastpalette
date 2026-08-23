@@ -223,3 +223,4 @@ export declare const generateRandomColorRampParams: {
         };
     };
 };
+export { generateFromColor, resolveFromColor } from "./generateFromColor";

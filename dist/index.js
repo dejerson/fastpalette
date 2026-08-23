@@ -12,12 +12,163 @@ var fettepalette = (() => {
   __export(src_exports, {
     colorToCSS: () => colorToCSS,
     easingFunctions: () => easingFunctions,
+    generateFromColor: () => generateFromColor,
     generateRandomColorRamp: () => generateRandomColorRamp,
     generateRandomColorRampParams: () => generateRandomColorRampParams,
     hsv2hsl: () => hsv2hsl,
     hsv2hsx: () => hsv2hsx,
-    pointOnCurve: () => pointOnCurve
+    pointOnCurve: () => pointOnCurve,
+    resolveFromColor: () => resolveFromColor
   });
+
+  // src/generateFromColor.ts
+  function parseHexChannel(hex) {
+    return parseInt(hex, 16);
+  }
+  function hexToRgb(hex) {
+    const cleaned = hex.trim().replace(/^#/, "");
+    if (/^[0-9a-f]{3}$/i.test(cleaned)) {
+      const expanded = cleaned.split("").map((c) => c + c).join("");
+      return [
+        parseHexChannel(expanded.slice(0, 2)),
+        parseHexChannel(expanded.slice(2, 4)),
+        parseHexChannel(expanded.slice(4, 6))
+      ];
+    }
+    if (/^[0-9a-f]{6}$/i.test(cleaned)) {
+      return [
+        parseHexChannel(cleaned.slice(0, 2)),
+        parseHexChannel(cleaned.slice(2, 4)),
+        parseHexChannel(cleaned.slice(4, 6))
+      ];
+    }
+    throw new TypeError(`hex parameter is expected to be "#RGB" or "#RRGGBB" but \`${hex}\` given.`);
+  }
+  function rgbToHsv(r, g, b) {
+    const rn = r / 255;
+    const gn = g / 255;
+    const bn = b / 255;
+    const max = Math.max(rn, gn, bn);
+    const min = Math.min(rn, gn, bn);
+    const d = max - min;
+    let h = 0;
+    if (d !== 0) {
+      if (max === rn) {
+        h = (gn - bn) / d % 6;
+      } else if (max === gn) {
+        h = (bn - rn) / d + 2;
+      } else {
+        h = (rn - gn) / d + 4;
+      }
+      h = (h * 60 + 360) % 360;
+    }
+    const s = max === 0 ? 0 : d / max;
+    return [h, s, max];
+  }
+  function solveRange(rawT, target) {
+    if (rawT <= 0) {
+      return [target, 1];
+    }
+    if (rawT >= 1) {
+      return [0, target];
+    }
+    if (target <= rawT) {
+      return [0, target / rawT];
+    }
+    return [(target - rawT) / (1 - rawT), 1];
+  }
+  function rangeDeviation(rawT, target) {
+    const [min, max] = solveRange(rawT, target);
+    return Math.max(min, 1 - max);
+  }
+  function pickAnchorIndex(curveMethod, total, curveAccent, saturationTarget, valueTarget) {
+    const middle = Math.floor((total + 1) / 2);
+    let bestIndex = middle;
+    let bestScore = Number.POSITIVE_INFINITY;
+    for (let i = 1; i <= total; i++) {
+      const [rawX, rawY] = pointOnCurve(curveMethod, i, total + 1, curveAccent, [0, 0], [1, 1]);
+      const score = Math.max(rangeDeviation(rawX, saturationTarget), rangeDeviation(rawY, valueTarget));
+      const distanceToMiddle = Math.abs(i - middle);
+      const bestDistanceToMiddle = Math.abs(bestIndex - middle);
+      const isBetter = score < bestScore || score === bestScore && (distanceToMiddle < bestDistanceToMiddle || distanceToMiddle === bestDistanceToMiddle && i < bestIndex);
+      if (isBetter) {
+        bestIndex = i;
+        bestScore = score;
+      }
+    }
+    return bestIndex;
+  }
+  function resolveFromColor(options) {
+    const {
+      hex,
+      total = 9,
+      anchor = "auto",
+      curveMethod = "arc",
+      curveAccent = 0,
+      hueCycle = 0,
+      tintShadeHueShift = 0.01,
+      offsetTint = 0.01,
+      offsetShade = 0.01,
+      offsetCurveModTint = 0.03,
+      offsetCurveModShade = 0.03,
+      colorModel = "hsl"
+    } = options;
+    if (!Number.isInteger(total) || total < 1) {
+      throw new RangeError(`total must be an integer of 1 or more.`);
+    }
+    const [r, g, b] = hexToRgb(hex);
+    const [hue, saturationTarget, valueTarget] = rgbToHsv(r, g, b);
+    let anchorIndex;
+    if (anchor === "auto") {
+      anchorIndex = pickAnchorIndex(curveMethod, total, curveAccent, saturationTarget, valueTarget);
+    } else {
+      if (!Number.isInteger(anchor) || anchor < 1 || anchor > total) {
+        throw new RangeError(`anchor must be "auto" or between 1 and ${total}.`);
+      }
+      anchorIndex = anchor;
+    }
+    const [rawX, rawY] = pointOnCurve(curveMethod, anchorIndex, total + 1, curveAccent, [0, 0], [1, 1]);
+    const [minSaturation, maxSaturation] = solveRange(rawX, saturationTarget);
+    const [minLight, maxLight] = solveRange(rawY, valueTarget);
+    const centerHue = (360 + (hue + 180 * hueCycle - anchorIndex * (360 / (total + 1)) * hueCycle) % 360) % 360;
+    return {
+      anchorIndex,
+      hue,
+      centerHue,
+      curveMethod,
+      curveAccent,
+      hueCycle,
+      tintShadeHueShift,
+      offsetTint,
+      offsetShade,
+      offsetCurveModTint,
+      offsetCurveModShade,
+      colorModel,
+      minSaturationLight: [minSaturation, minLight],
+      maxSaturationLight: [maxSaturation, maxLight]
+    };
+  }
+  function generateFromColor(options) {
+    var _a;
+    const resolution = resolveFromColor(options);
+    return generateRandomColorRamp({
+      total: (_a = options.total) != null ? _a : 9,
+      centerHue: resolution.centerHue,
+      hueCycle: resolution.hueCycle,
+      offsetTint: resolution.offsetTint,
+      offsetShade: resolution.offsetShade,
+      curveAccent: resolution.curveAccent,
+      tintShadeHueShift: resolution.tintShadeHueShift,
+      curveMethod: resolution.curveMethod,
+      offsetCurveModTint: resolution.offsetCurveModTint,
+      offsetCurveModShade: resolution.offsetCurveModShade,
+      minSaturationLight: resolution.minSaturationLight,
+      maxSaturationLight: resolution.maxSaturationLight,
+      colorModel: resolution.colorModel
+    });
+  }
+
+  // src/index.ts
   var easingFunctions = {
     linear: (x) => x,
     easeInSine: (x, accentuation = 0) => 1 - Math.cos(x * Math.PI / 2 + accentuation * Math.PI / 2),

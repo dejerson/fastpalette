@@ -481,6 +481,92 @@
         background-color: transparent;
       }
 
+      .pin {
+        border-top: 1px solid #3a3b40;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+      }
+      .pin__toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      .pin__toggle input {
+        accent-color: #fff;
+        width: 1.1rem;
+        height: 1.1rem;
+      }
+      .pin__controls {
+        display: none;
+        margin-top: 1rem;
+      }
+      .pin--on .pin__controls {
+        display: block;
+      }
+      .pin__color-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .pin__swatch {
+        position: relative;
+        width: 2.4rem;
+        height: 2.4rem;
+        padding: 0;
+        border: 1px solid #fff;
+        background: #3f8f8c;
+        overflow: hidden;
+        flex: 0 0 auto;
+        cursor: pointer;
+      }
+      .pin__swatch input[type="color"] {
+        position: absolute;
+        inset: -25%;
+        width: 150%;
+        height: 150%;
+        opacity: 0;
+        cursor: pointer;
+      }
+      .pin__hex {
+        flex: 1 1 auto;
+        min-width: 0;
+        box-sizing: border-box;
+        color: var(--color-inverted, #fff);
+        background: transparent;
+        border: none;
+        box-shadow: 0 1px 0 0 var(--color-inverted, #fff);
+        font-family: "Space Mono", monospace;
+        font-size: 0.85em;
+        padding: 0.25rem 0;
+        text-transform: uppercase;
+      }
+      .pin__hex:focus {
+        outline: none;
+      }
+      .pin__field label,
+      .pin__meta {
+        display: block;
+      }
+      .pin__field label {
+        font-size: 0.8rem;
+        font-weight: 400;
+        line-height: 1;
+        margin-bottom: 0.8em;
+      }
+      .pin__field select {
+        margin-bottom: 1rem;
+      }
+      .pin__meta {
+        font-size: 0.65rem;
+        line-height: 1.6;
+        opacity: 0.75;
+        word-break: break-all;
+      }
+
       svg:not(:root) {
         overflow: visible;
       }
@@ -543,6 +629,32 @@
           <code>
             <pre data-code></pre>
           </code>
+        </aside>
+        <aside class="pin" id="pinSection">
+          <h3>Pin to Color</h3>
+          <p style="font-size: 0.7em; margin-top: 0.5em">
+            Anchor the whole ramp on one exact hex. The best-fitting slot is
+            picked automatically.
+          </p>
+          <label class="pin__toggle">
+            <input type="checkbox" id="pinEnabled" />
+            <span id="pinModeLabel">off</span>
+          </label>
+          <div class="pin__controls" id="pinControls">
+            <div class="pin__color-row">
+              <span class="pin__swatch" id="pinSwatch">
+                <input type="color" id="pinColorNative" value="#3F8F8C" />
+              </span>
+              <input type="text" class="pin__hex" id="pinHexText"
+                     value="#3F8F8C" maxlength="7"
+                     spellcheck="false" autocomplete="off" />
+            </div>
+            <div class="pin__field">
+              <label for="pinTargetIndex">Position in ramp</label>
+              <select id="pinTargetIndex"></select>
+            </div>
+            <div class="pin__meta" id="pinMeta"></div>
+          </div>
         </aside>
         <aside>
           <h3>Settings</h3>
@@ -684,6 +796,8 @@
         hsv2hsl,
         pointOnCurve,
         colorToCSS,
+        generateFromColor,
+        resolveFromColor,
       } from "./index.mjs";
 
       console.clear();
@@ -938,6 +1052,8 @@
 
       PARAMS.model = 'hsl';
 
+      generateRandomColorRampParams.curveMethod.props.options = ["lamé", "arc", "pow"];
+
       Object.keys(generateRandomColorRampParams).forEach((key) => {
         const param = generateRandomColorRampParams[key];
         PARAMS[key] = param.default;
@@ -947,6 +1063,153 @@
       pane.addInput(PARAMS, 'model', {
         options: ['hsl', 'oklch', 'lch']
       });
+
+      // ── Pin to Color ─────────────────────────────────────────────────────
+
+      const $pinSection = document.getElementById("pinSection");
+      const $pinEnabled = document.getElementById("pinEnabled");
+      const $pinControls = document.getElementById("pinControls");
+      const $pinSwatch = document.getElementById("pinSwatch");
+      const $pinColorNative = document.getElementById("pinColorNative");
+      const $pinHexText = document.getElementById("pinHexText");
+      const $pinTargetIndex = document.getElementById("pinTargetIndex");
+      const $pinMeta = document.getElementById("pinMeta");
+      const $pinModeLabel = document.getElementById("pinModeLabel");
+
+      let pinResolution = null;
+
+      const pinned = () => $pinEnabled.checked;
+
+      function parseHexInput(raw) {
+        const m = String(raw).trim().match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (!m) return null;
+        let h = m[1].toLowerCase();
+        if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+        return "#" + h;
+      }
+
+      function syncHex(hex) {
+        $pinHexText.value = hex.toUpperCase();
+        $pinColorNative.value = hex.toLowerCase();
+        $pinSwatch.style.background = hex;
+      }
+
+      function currentAnchorOption() {
+        if (!$pinTargetIndex.value || $pinTargetIndex.value === "auto") return "auto";
+        return parseInt($pinTargetIndex.value, 10);
+      }
+
+      function rebuildIndexOptions() {
+        const total = PARAMS.total;
+        const prev = $pinTargetIndex.value;
+        const mid = Math.floor((total + 1) / 2);
+
+        let html = `<option value="auto">Auto — best fit</option>`;
+        for (let i = 1; i <= total; i++) {
+          html += `<option value="${i}">${i === mid ? `${i} — middle` : i}</option>`;
+        }
+        $pinTargetIndex.innerHTML = html;
+
+        const stillThere = Array.from($pinTargetIndex.options)
+          .some((o) => o.value === prev);
+        if (stillThere) {
+          $pinTargetIndex.value = prev;
+        } else {
+          $pinTargetIndex.value = "auto";
+        }
+      }
+
+      function updatePinMeta() {
+        if (!pinResolution) {
+          $pinMeta.innerHTML = "";
+          return;
+        }
+        const r = pinResolution;
+        const [minS, minL] = r.minSaturationLight;
+        const [maxS, maxL] = r.maxSaturationLight;
+        $pinMeta.innerHTML =
+          `resolved slot <strong>${r.anchorIndex}</strong> · ` +
+          `centerHue ${r.centerHue.toFixed(2)}°<br>` +
+          `sat box [${minS.toFixed(3)}, ${maxS.toFixed(3)}] · ` +
+          `light box [${minL.toFixed(3)}, ${maxL.toFixed(3)}]`;
+      }
+
+      function computeRamp() {
+        const shared = {
+          total: Number(PARAMS.total),
+          curveMethod: PARAMS.curveMethod,
+          curveAccent: Number(PARAMS.curveAccent),
+          hueCycle: Number(PARAMS.hueCycle),
+          tintShadeHueShift: Number(PARAMS.tintShadeHueShift),
+          offsetTint: Number(PARAMS.offsetTint),
+          offsetShade: Number(PARAMS.offsetShade),
+          offsetCurveModTint: Number(PARAMS.offsetCurveModTint),
+          offsetCurveModShade: Number(PARAMS.offsetCurveModShade),
+          colorModel: outputModel === 'hsl' ? 'hsl' : 'hsv',
+        };
+
+        if (!pinned()) {
+          pinResolution = null;
+          updatePinMeta();
+          return generateRandomColorRamp({
+            ...shared,
+            centerHue: PARAMS.centerHue,
+            minSaturationLight: [PARAMS.minSaturation, PARAMS.minLight],
+            maxSaturationLight: [PARAMS.maxSaturation, PARAMS.maxLight],
+          });
+        }
+
+        const anchor = currentAnchorOption();
+
+        pinResolution = resolveFromColor({
+          hex: $pinHexText.value,
+          anchor,
+          ...shared,
+        });
+
+        updatePinMeta();
+
+        return generateFromColor({
+          hex: $pinHexText.value,
+          anchor,
+          ...shared,
+        });
+      }
+
+      $pinEnabled.addEventListener("change", () => {
+        $pinSection.classList.toggle("pin--on", pinned());
+        $pinControls.style.display = pinned() ? "" : "none";
+        $pinModeLabel.textContent = pinned() ? "on" : "off";
+        bam();
+      });
+
+      $pinColorNative.addEventListener("input", () => {
+        syncHex($pinColorNative.value);
+        bam();
+      });
+
+      const commitHexText = () => {
+        const hex = parseHexInput($pinHexText.value);
+        if (hex) {
+          syncHex(hex);
+          bam();
+        } else {
+          $pinHexText.value = $pinColorNative.value.toUpperCase();
+        }
+      };
+
+      $pinHexText.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          commitHexText();
+          $pinHexText.blur();
+        }
+      });
+      $pinHexText.addEventListener("blur", commitHexText);
+
+      $pinTargetIndex.addEventListener("change", bam);
+
+      rebuildIndexOptions();
+      syncHex($pinColorNative.value);
 
       const $pal = document.querySelector("[data-palette]");
       const $picker = document.querySelector("[data-figure]");
@@ -1038,21 +1301,7 @@
 
       function bam() {
 
-        colors = generateRandomColorRamp({
-          total: PARAMS.total,
-          centerHue: PARAMS.centerHue,
-          hueCycle: PARAMS.hueCycle,
-          offsetTint: PARAMS.offsetTint,
-          offsetShade: PARAMS.offsetShade,
-          curveAccent: PARAMS.curveAccent,
-          tintShadeHueShift: PARAMS.tintShadeHueShift,
-          curveMethod: PARAMS.curveMethod,
-          offsetCurveModTint: PARAMS.offsetCurveModTint,
-          offsetCurveModShade: PARAMS.offsetCurveModShade,
-          minSaturationLight: [PARAMS.minSaturation, PARAMS.minLight],
-          maxSaturationLight: [PARAMS.maxSaturation, PARAMS.maxLight],
-          colorModel: outputModel === 'hsl' ? 'hsl' : 'hsv',
-        });
+        colors = computeRamp();
 
         // Mutate colors object
         for (const key in colors) {
@@ -1079,7 +1328,17 @@
 
         document.querySelector(
           "[data-code]"
-        ).innerHTML = `generateRandomColorRamp({
+        ).innerHTML = pinned()
+          ? `generateFromColor({
+  hex: '${$pinHexText.value.toUpperCase()}',
+  total: ${PARAMS.total},
+  anchor: ${currentAnchorOption() === "auto" ? "'auto'" : currentAnchorOption()},
+  curveMethod: '${PARAMS.curveMethod}',
+  curveAccent: ${PARAMS.curveAccent},
+  hueCycle: ${PARAMS.hueCycle},
+});
+// → slot ${pinResolution.anchorIndex} · centerHue ${pinResolution.centerHue.toFixed(2)}°`
+          : `generateRandomColorRamp({
   total: ${PARAMS.total},
   centerHue: ${PARAMS.centerHue},
   hueCycle: ${PARAMS.hueCycle},
@@ -1337,7 +1596,10 @@
       });
       $pal.addEventListener("pointerup", () => clearInterval(timer));
 
-      pane.on("change", bam);
+      pane.on("change", () => {
+        rebuildIndexOptions();
+        bam();
+      });
 
       document.documentElement.addEventListener("pointerdown", e => {
         const $target = e.target;
