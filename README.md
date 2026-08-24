@@ -176,6 +176,94 @@ Object.keys(generateRandomColorRampParams).forEach((key) => {
 });
 ```
 
+### generateFromColor(Options{})
+
+Generates a color ramp that passes **exactly** through a given hex color. One base
+swatch will match the input color precisely — no manual tuning of
+`minSaturationLight`/`maxSaturationLight` required. The return shape is identical to
+`generateRandomColorRamp()`.
+
+```js
+import { generateFromColor } from 'fettepalette';
+
+const ramp = generateFromColor({
+  hex: '#3F8F8C',      // the exact color to include in the ramp
+                       // accepts "#RGB", "#RRGGBB", "RGB", "RRGGBB"
+
+  total:               9,     // amount of base colors in the ramp
+
+  anchor:            'auto', // which base swatch (1…total) should be exactly
+                             // the input color, or 'auto' to pick the slot
+                             // that distorts the curve least
+
+  curveMethod:        'arc', // what method is used to draw the curve,
+                             // same as generateRandomColorRamp
+
+  curveAccent:          0,   // how accentuated is the curve
+
+  hueCycle:             0,   // how much should the hue change over the curve,
+                             // the pinned color stays exact regardless
+
+  tintShadeHueShift: 0.01,   // defines how shifted the hue is
+                             // for the shades and the tints
+
+  offsetTint:        0.01,   // offset for the tints
+
+  offsetShade:       0.01,   // offset of the shades
+
+  offsetCurveModTint: 0.03,  // modifies the tint curve
+
+  offsetCurveModShade: 0.03, // modifies the shade curve
+
+  colorModel:        'hsl',  // color model of the returned colors
+});
+```
+
+```js
+{
+    light: [], // tints
+    dark: [], // shades
+    base: [], // medium colors — base[anchorIndex - 1] is exactly `hex`
+    all: [], // all colors
+ }
+```
+
+#### Options
+
+- `hex` string → The input color to pin into the ramp. Required.
+- `total` int 1… → Amount of base colors. Default `9`.
+- `anchor` int 1…total | `'auto'` → Which base swatch becomes the input color.
+  `'auto'` picks the slot whose curve position fits the target saturation/value
+  best, keeping the saturation/lightness ranges as wide as possible. Default `'auto'`.
+- `curveMethod` string `'lamé'|'arc'|'pow'` → Method used to draw the curve. Default `'arc'`.
+- `curveAccent` float -1…1 → How accentuated the curve is. Default `0`.
+- `hueCycle` float → How much the hue changes over the curve, 0: monohue. Default `0`.
+- All remaining options (`tintShadeHueShift`, `offsetTint`, `offsetShade`,
+  `offsetCurveModTint`, `offsetCurveModShade`, `colorModel`) mirror their
+  `generateRandomColorRamp()` counterparts.
+
+Throws a `TypeError` for malformed hex strings and a `RangeError` when `total`
+is not an integer ≥ 1 or `anchor` is outside `1…total`.
+
+### resolveFromColor(Options{})
+
+Same options as `generateFromColor()`, but instead of a ramp it returns the derived
+parameters — handy for debugging or building UIs around the feature:
+
+```js
+import { resolveFromColor } from 'fettepalette';
+
+resolveFromColor({ hex: '#3F8F8C', total: 9 });
+// → {
+//     anchorIndex: 5,                  // which swatch gets pinned
+//     hue: 178.9,                      // input color's HSV hue
+//     centerHue: 178.9,                // centerHue to feed generateRandomColorRamp
+//     minSaturationLight: [0, …],      // solved saturation/lightness box
+//     maxSaturationLight: […, …],
+//     …plus all pass-through options
+//   }
+```
+
 ## Reading and Inspiration
 
 - Video: [Hue Shifting in Pixel Art](https://www.youtube.com/watch?v=PNtMAxYaGyg) by [Brandon James Greer](https://twitter.com/BJGpixel)
