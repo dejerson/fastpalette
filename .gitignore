@@ -104,3 +104,6 @@ typings/
 
 # local reference material — never commit
 archive/
+
+# macOS
+.DS_Store
