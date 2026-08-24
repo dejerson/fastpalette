@@ -277,6 +277,14 @@ defaults:
   hidden — their values are derived from the pinned hex color instead
 - in pin mode, the curve preview draws using the boxes solved by
   `resolveFromColor()` rather than the hidden slider values
+- the **Position in ramp** selector is hidden — auto best-fit always picks
+  the anchor slot; the resolved slot and `centerHue` remain visible in the
+  meta readout
+- option settings such as **curve method** are picked from a segmented button
+  row instead of a dropdown
+- page and sidebar use custom overlay scrollbars: 6px pills that fade while
+  idle, brighten on hover, are draggable, and turn light over the dark
+  names/footer zone
 - palette sample tiles are dealt with a WCAG contrast bias: slot one is random
   from the shuffle, later slots are drawn from the three highest-contrast
   candidates already on the tile

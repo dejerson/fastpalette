@@ -4,6 +4,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Demo page: native scrollbars are replaced with JS-drawn overlay thumbs on
+  both the page and the settings sidebar — 6px pills that fade out while idle,
+  brighten on hover, are draggable, and flip light once the page scrolls into
+  the dark names/footer zone.
+- Demo page: option-type settings (e.g. curve method) render as a segmented
+  row of buttons with a pressed state instead of a `<select>` dropdown.
+- Demo page: the Pin-to-Color toggle is restyled as a switch, the redundant
+  "Position in ramp" selector is hidden (auto best-fit always picks the slot;
+  resolved slot and `centerHue` stay visible in the meta readout) and the
+  Function Call snippet moves below the pin panel.
+
+### Internal
+
+- Agent guardrails: `AGENTS.md` marks the local-only `archive/` folder as out
+  of bounds for coding agents, and `.opencode/opencode.json` hard-denies
+  OpenCode edits under `archive/**`. macOS `.DS_Store` files are ignored.
+
 ## [3.4.0] - 2026-08-24
 
 ### Added
