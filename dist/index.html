@@ -1289,16 +1289,16 @@
         let localcolors = [...allColors];
         $pal.innerHTML = "";
 
-        $pal.appendChild(paletteDom(localcolors, 1));
+        $pal.appendChild(paletteDom(dealContrastFour(localcolors), 1));
         localcolors = shuffleArray(localcolors);
 
         for (let i = 0; i < 2; i++) {
-          $pal.appendChild(paletteDom(localcolors, 2));
+          $pal.appendChild(paletteDom(dealContrastFour(localcolors), 2));
           localcolors = shuffleArray(localcolors);
         }
 
         for (let i = 0; i < 4 * 2; i++) {
-          $pal.appendChild(paletteDom(localcolors, 4));
+          $pal.appendChild(paletteDom(dealContrastFour(localcolors), 4));
           localcolors = shuffleArray(localcolors);
         }
 
@@ -1315,6 +1315,45 @@
 
         requestAnimationFrame(() => updateFavicon(localcolors.map(c => c.css)))
       };
+
+      // Deals 4 colors from an already-shuffled pool. Slot 1 is whatever the
+      // shuffle dealt; each later slot is drawn randomly from the 3 candidates
+      // with the strongest WCAG contrast against the tile so far, so tiles
+      // pair high-contrast colors without losing the randomness.
+      // If the pool runs dry early, already-picked colors fill the remaining
+      // seats instead of leaving undefined slots for paletteDom().
+      function dealContrastFour(pool) {
+        const rest = [...pool];
+        const picked = [];
+
+        while (picked.length < 4) {
+          if (!rest.length) {
+            // pool exhausted: recycle seat #1 into any remaining chairs;
+            // bail entirely only if there was nothing to deal from at all
+            // (unreachable via UI — total min 3 guarantees ≥9 colors)
+            if (!picked.length) break;
+            picked.push(picked[0]);
+            continue;
+          }
+
+          const scored = rest.map((c) => ({
+            c,
+            s:
+              picked.length === 0
+                ? Infinity
+                : Math.min(
+                    ...picked.map((p) => culori.wcagContrast(p.hex, c.hex))
+                  ),
+          }));
+          scored.sort((a, b) => b.s - a.s);
+
+          const win = scored[Math.floor(Math.random() * Math.min(3, scored.length))].c;
+          picked.push(win);
+          rest.splice(rest.indexOf(win), 1);
+        }
+
+        return picked;
+      }
 
       function paletteDom(colorArr, x = 1) {
         const $div = document.createElement("div");
