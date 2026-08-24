@@ -101,3 +101,6 @@ typings/
 
 # TernJS port file
 .tern-port
+
+# local reference material — never commit
+archive/
