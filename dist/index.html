@@ -1054,6 +1054,17 @@
 
       generateRandomColorRampParams.curveMethod.props.options = ["lamé", "arc", "pow"];
 
+      // cap ramp size at 12
+      generateRandomColorRampParams.total.props.max = 12;
+
+      // coarsen any step finer than 0.01 down to 2 decimals
+      // (nine 0.001 sliders + offsetCurveModTint/Shade at 0.0001)
+      Object.values(generateRandomColorRampParams).forEach((param) => {
+        if (typeof param.props.step === "number" && param.props.step < 0.01) {
+          param.props.step = 0.01;
+        }
+      });
+
       Object.keys(generateRandomColorRampParams).forEach((key) => {
         const param = generateRandomColorRampParams[key];
         PARAMS[key] = param.default;
@@ -1079,6 +1090,26 @@
       let pinResolution = null;
 
       const pinned = () => $pinEnabled.checked;
+
+      // sliders that have no effect in pin mode — their values are derived
+      // from the pinned hex instead of PARAMS
+      const pinDeadSections = [
+        "centerHue",
+        "minSaturation",
+        "minLight",
+        "maxSaturation",
+        "maxLight",
+      ].map(
+        (key) =>
+          document.querySelector(`[data-pane] input[data-key="${key}"]`)
+            ?.closest(".pane__section")
+      );
+
+      function syncPinSliderVisibility() {
+        pinDeadSections.forEach(($s) => {
+          if ($s) $s.style.display = pinned() ? "none" : "";
+        });
+      }
 
       function parseHexInput(raw) {
         const m = String(raw).trim().match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i);
@@ -1180,6 +1211,7 @@
         $pinSection.classList.toggle("pin--on", pinned());
         $pinControls.style.display = pinned() ? "" : "none";
         $pinModeLabel.textContent = pinned() ? "on" : "off";
+        syncPinSliderVisibility();
         bam();
       });
 
@@ -1210,6 +1242,7 @@
 
       rebuildIndexOptions();
       syncHex($pinColorNative.value);
+      syncPinSliderVisibility();
 
       const $pal = document.querySelector("[data-palette]");
       const $picker = document.querySelector("[data-figure]");
@@ -1354,6 +1387,8 @@
 });
 `;
 
+        // in pin mode the curve preview must use the solved boxes from
+        // resolveFromColor, not the (hidden) PARAMS sliders
         points(
           PARAMS.total,
           PARAMS.offsetTint,
@@ -1363,8 +1398,12 @@
           PARAMS.curveMethod,
           PARAMS.offsetCurveModTint,
           PARAMS.offsetCurveModShade,
-          [PARAMS.minSaturation, PARAMS.minLight],
-          [PARAMS.maxSaturation, PARAMS.maxLight]
+          pinned() && pinResolution
+            ? pinResolution.minSaturationLight
+            : [PARAMS.minSaturation, PARAMS.minLight],
+          pinned() && pinResolution
+            ? pinResolution.maxSaturationLight
+            : [PARAMS.maxSaturation, PARAMS.maxLight]
         );
 
 
