@@ -42,6 +42,71 @@
         --sidebarwidth: 20rem;
       }
 
+      /* ── scrollbars ──────────────────────────────────────────────────
+         both native bars are hidden entirely; two JS-drawn overlay
+         thumbs (.sb-progress) stand in, so no track/gutter ever exists */
+      html::-webkit-scrollbar,
+      .settings::-webkit-scrollbar {
+        display: none;
+      }
+      html,
+      .settings {
+        scrollbar-width: none;
+      }
+
+      /* overlay thumbs standing in for the native scrollbars */
+      .sb-progress {
+        position: fixed;
+        top: 0;
+        width: 6px;
+        z-index: 10;
+        touch-action: none;
+      }
+      .sb-progress--page {
+        right: 2px;
+        height: 100vh;
+      }
+      .sb-progress--side {
+        left: calc(var(--sidebarwidth) - 8px);
+        height: 100vh;
+      }
+      .sb-progress::after {
+        content: "";
+        position: absolute;
+        top: var(--sb-y, 0px);
+        height: var(--sb-h, 0px);
+        width: 100%;
+        border-radius: 999px;
+        opacity: 0;
+        transition: opacity 150ms, background-color 150ms;
+      }
+      .sb-progress:hover::after,
+      .sb-progress.sb-active::after,
+      .sb-progress.sb-drag::after {
+        opacity: 1;
+      }
+      /* page thumb: dark over white .main … */
+      .sb-progress--page::after {
+        background: rgba(0, 0, 0, 0.22);
+      }
+      .sb-progress--page:hover::after {
+        background: rgba(0, 0, 0, 0.38);
+      }
+      /* …light once scrolled into the dark names/footer zone */
+      html.in-footer .sb-progress--page::after {
+        background: rgba(255, 255, 255, 0.28);
+      }
+      html.in-footer .sb-progress--page:hover::after {
+        background: rgba(255, 255, 255, 0.45);
+      }
+      /* sidebar thumb: lighter shade of its own dark bg */
+      .sb-progress--side::after {
+        background: #4a4b52;
+      }
+      .sb-progress--side:hover::after {
+        background: #606168;
+      }
+
       .settings {
         position: fixed;
         width: var(--sidebarwidth);
@@ -481,23 +546,90 @@
         background-color: transparent;
       }
 
+      .pane__options {
+        display: flex;
+        gap: 0.75rem;
+      }
+      .pane .pane__input--string {
+        appearance: none;
+        box-sizing: border-box;
+        background-color: transparent;
+        color: var(--color-inverted);
+        border: none;
+        border-radius: 0;
+        box-shadow: 0 1px 0 0 var(--color-inverted);
+        font-family: "Space Mono", monospace;
+        font-size: 0.8em;
+        padding: 0.25rem 0;
+        cursor: pointer;
+      }
+      .pane .pane__input--string:focus {
+        outline: none;
+      }
+      .pane .pane__input--selected {
+        opacity: 1;
+      }
+      .pane .pane__input--string:not(.pane__input--selected) {
+        opacity: 0.55;
+      }
+      .pane
+        .pane__input--string:not(.pane__input--selected):hover {
+        opacity: 0.8;
+      }
+
       .pin {
         border-top: 1px solid #3a3b40;
         margin-top: 2rem;
         padding-top: 1.5rem;
       }
       .pin__toggle {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
+        position: relative;
+        display: inline-block;
+        box-sizing: border-box;
+        width: 2.6rem;
+        height: 1.4rem;
         cursor: pointer;
-        font-weight: 700;
-        font-size: 0.9rem;
       }
       .pin__toggle input {
-        accent-color: #fff;
-        width: 1.1rem;
-        height: 1.1rem;
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .pin__toggle::before,
+      .pin__toggle::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        transition: 150ms background-color, 150ms left;
+      }
+      .pin__toggle::before {
+        left: 0;
+        box-sizing: border-box;
+        width: 2.6rem;
+        height: 1.4rem;
+        border: 1px solid #fff;
+        border-radius: 999px;
+        background: transparent;
+      }
+      .pin__toggle::after {
+        left: 0.25rem;
+        width: 0.9rem;
+        height: 0.9rem;
+        border-radius: 50%;
+        background: #fff;
+      }
+      .pin__toggle:focus-within::before {
+        outline: 1px solid #fff;
+        outline-offset: 2px;
+      }
+      .pin--on .pin__toggle::before {
+        background: #fff;
+      }
+      .pin--on .pin__toggle::after {
+        left: calc(100% - 1.15rem);
+        background: #202124;
       }
       .pin__controls {
         display: none;
@@ -505,6 +637,11 @@
       }
       .pin--on .pin__controls {
         display: block;
+      }
+      /* anchor picker is redundant while "auto" is the default; the resolved
+         slot + centerHue stay visible in the meta readout below */
+      .pin__field--anchor {
+        display: none;
       }
       .pin__color-row {
         display: flex;
@@ -624,22 +761,15 @@
           </p>
           <a class="projectlink" href="https://github.com/meodai/fettepalette">Github</a>
         </aside>
-        <aside class="fnCall">
-          <h3 class="code-title">Function Call</h3>
-          <code>
-            <pre data-code></pre>
-          </code>
-        </aside>
         <aside class="pin" id="pinSection">
           <h3>Pin to Color</h3>
+          <label class="pin__toggle">
+            <input type="checkbox" id="pinEnabled" />
+          </label>
           <p style="font-size: 0.7em; margin-top: 0.5em">
             Anchor the whole ramp on one exact hex. The best-fitting slot is
             picked automatically.
           </p>
-          <label class="pin__toggle">
-            <input type="checkbox" id="pinEnabled" />
-            <span id="pinModeLabel">off</span>
-          </label>
           <div class="pin__controls" id="pinControls">
             <div class="pin__color-row">
               <span class="pin__swatch" id="pinSwatch">
@@ -649,7 +779,7 @@
                      value="#3F8F8C" maxlength="7"
                      spellcheck="false" autocomplete="off" />
             </div>
-            <div class="pin__field">
+            <div class="pin__field pin__field--anchor">
               <label for="pinTargetIndex">Position in ramp</label>
               <select id="pinTargetIndex"></select>
             </div>
@@ -661,6 +791,12 @@
           <div class="settings__inner">
             <div data-pane></div>
           </div>
+        </aside>
+        <aside class="fnCall">
+          <h3 class="code-title">Function Call</h3>
+          <code>
+            <pre data-code></pre>
+          </code>
         </aside>
         <footer>
           <a href="https://www.elastiq.ch/" hreflang="en" class="ellogo"><svg xmlns="http://www.w3.org/2000/svg"
@@ -871,6 +1007,11 @@
             },
             true
           );
+          this.$el.addEventListener("click", (e) => {
+            if (e.target.matches("button")) {
+              this._onChange(e);
+            }
+          });
 
           $dom.appendChild(this.$el);
 
@@ -907,6 +1048,17 @@
                 $target.value;
             }
 
+            if ($target.matches("button")) {
+              Array.from($target.parentNode.children).forEach(($b) => {
+                const selected = $b === $target;
+                $b.classList.toggle(
+                  `${this.nameSpace}__input--selected`,
+                  selected
+                );
+                $b.setAttribute("aria-pressed", String(selected));
+              });
+            }
+
             this._callCallbacks(ref);
           }
         }
@@ -928,7 +1080,14 @@
           if (!$input) {
             return;
           }
-          if ( $input.matches('select') ) {
+          if ($input.matches("button")) {
+            const selected = $input.value === (value || ref[key]);
+            $input.classList.toggle(
+              `${this.nameSpace}__input--selected`,
+              selected
+            );
+            $input.setAttribute("aria-pressed", String(selected));
+          } else if ( $input.matches('select') ) {
             Array.from($input.querySelectorAll('option')).forEach($input => 
               $input.selected = $input.value === (value || ref[key])
             );
@@ -967,7 +1126,7 @@
           const $label = document.createElement("strong");
           const $section = document.createElement("div");
 
-          let $i, $in;
+          let $i, $in, $group;
 
           if (type === "number") {
             $i = document.createElement("input");
@@ -990,13 +1149,22 @@
             }
           } else if (type === "string") {
             if (options.hasOwnProperty("options")) {
-              $i = document.createElement("select");
+              $group = document.createElement("div");
+              $group.id = `${this.nameSpace}--${key}`;
+              $group.classList.add(`${this.nameSpace}__options`);
 
               options.options.forEach((option) => {
-                const $opt = document.createElement("option");
-                $opt.setAttribute("value", option);
+                const $opt = document.createElement("button");
+                $opt.type = "button";
+                $opt.value = option;
                 $opt.innerHTML = option;
-                $i.appendChild($opt);
+                $opt.dataset.key = key;
+                $opt.dataset.type = type;
+                $opt.classList.add(
+                  `${this.nameSpace}__input`,
+                  `${this.nameSpace}__input--${type}`
+                );
+                $group.appendChild($opt);
               });
             } else {
               $i = document.createElement("input");
@@ -1004,16 +1172,28 @@
             }
           }
 
-          $i.dataset.key = key;
-          $i.dataset.type = type;
-          $i.value = reference[key];
-          $i.id = `${this.nameSpace}--${key}`;
-          $i.classList.add(
-            `${this.nameSpace}__input`,
-            `${this.nameSpace}__input--${type}`
-          );
+          if ($group) {
+            Array.from($group.children).forEach(($opt) => {
+              const selected = $opt.value === reference[key];
+              $opt.classList.toggle(
+                `${this.nameSpace}__input--selected`,
+                selected
+              );
+              $opt.setAttribute("aria-pressed", String(selected));
+            });
+            $section.appendChild($group);
+          } else {
+            $i.dataset.key = key;
+            $i.dataset.type = type;
+            $i.value = reference[key];
+            $i.id = `${this.nameSpace}--${key}`;
+            $i.classList.add(
+              `${this.nameSpace}__input`,
+              `${this.nameSpace}__input--${type}`
+            );
 
-          $section.appendChild($i);
+            $section.appendChild($i);
+          }
           $section.classList.add(
             `${this.nameSpace}__inputs`,
             `${this.nameSpace}__inputs--${type}`
@@ -1042,7 +1222,9 @@
 
           this.$el.appendChild($e);
 
-          return [$i, $in];
+          return $group
+            ? Array.from($group.children)
+            : [$i, $in];
         }
       }
 
@@ -1085,7 +1267,6 @@
       const $pinHexText = document.getElementById("pinHexText");
       const $pinTargetIndex = document.getElementById("pinTargetIndex");
       const $pinMeta = document.getElementById("pinMeta");
-      const $pinModeLabel = document.getElementById("pinModeLabel");
 
       let pinResolution = null;
 
@@ -1210,7 +1391,6 @@
       $pinEnabled.addEventListener("change", () => {
         $pinSection.classList.toggle("pin--on", pinned());
         $pinControls.style.display = pinned() ? "" : "none";
-        $pinModeLabel.textContent = pinned() ? "on" : "off";
         syncPinSliderVisibility();
         bam();
       });
@@ -1708,6 +1888,109 @@
       }
 
       bam();
+
+      // ── overlay scrollbars ───────────────────────────────────────────────
+      // both native bars are hidden via CSS; these draw floating 6px thumbs
+      // instead — no track or gutter ever visible. thumbs fade out while
+      // idle, brighten on hover and are draggable.
+      const createOverlayScrollbar = ($scroller, variant) => {
+        const $rail = document.createElement("div");
+        $rail.className = `sb-progress ${variant}`;
+        $rail.setAttribute("aria-hidden", "true");
+        document.body.appendChild($rail);
+
+        let fadeTimer;
+
+        const update = () => {
+          const maxScroll =
+            $scroller.scrollHeight - $scroller.clientHeight;
+          const trackH = $scroller.clientHeight;
+          const thumbH = Math.max(
+            (trackH / $scroller.scrollHeight) * trackH,
+            24
+          );
+          const y =
+            maxScroll > 0
+              ? ($scroller.scrollTop / maxScroll) * (trackH - thumbH)
+              : 0;
+
+          $rail.style.setProperty("--sb-y", `${y}px`);
+          $rail.style.setProperty("--sb-h", `${thumbH}px`);
+          $rail.style.display = maxScroll > 0 ? "" : "none";
+
+          $rail.classList.add("sb-active");
+          clearTimeout(fadeTimer);
+          fadeTimer = setTimeout(() => {
+            if (!$rail.matches(":hover")) {
+              $rail.classList.remove("sb-active");
+            }
+          }, 600);
+        };
+
+        // drag the thumb to scroll
+        let dragging = false;
+        let grabOffset = 0;
+        const maxThumbTravel = () =>
+          $scroller.clientHeight -
+          parseFloat(getComputedStyle($rail).getPropertyValue("--sb-h"));
+
+        $rail.addEventListener("pointerdown", (e) => {
+          grabOffset =
+            e.clientY -
+            $rail.getBoundingClientRect().top -
+            parseFloat(getComputedStyle($rail).getPropertyValue("--sb-y"));
+          dragging = true;
+          $rail.classList.add("sb-drag");
+          $rail.setPointerCapture(e.pointerId);
+        });
+        $rail.addEventListener("pointermove", (e) => {
+          if (!dragging) return;
+          const travel = maxThumbTravel();
+          const maxScroll =
+            $scroller.scrollHeight - $scroller.clientHeight;
+          const frac = travel
+            ? (e.clientY - $rail.getBoundingClientRect().top - grabOffset) /
+              travel
+            : 0;
+          $scroller.scrollTop = Math.min(Math.max(frac, 0), 1) * maxScroll;
+        });
+        const endDrag = () => {
+          if (!dragging) return;
+          dragging = false;
+          $rail.classList.remove("sb-drag");
+          update();
+        };
+        $rail.addEventListener("pointerup", endDrag);
+        $rail.addEventListener("pointercancel", endDrag);
+
+        $scroller.addEventListener("scroll", update, { passive: true });
+        window.addEventListener("resize", update);
+        update();
+
+        return $rail;
+      };
+
+      createOverlayScrollbar(
+        document.scrollingElement,
+        "sb-progress--page"
+      );
+      createOverlayScrollbar(
+        document.querySelector(".settings"),
+        "sb-progress--side"
+      );
+
+      // light page thumb once the white .main section has scrolled past,
+      // so it stays visible over the dark names/footer zone
+      const $main = document.querySelector(".main");
+      const syncFooterTint = () => {
+        document.documentElement.classList.toggle(
+          "in-footer",
+          $main.getBoundingClientRect().bottom < window.innerHeight
+        );
+      };
+      window.addEventListener("scroll", syncFooterTint, { passive: true });
+      window.addEventListener("resize", syncFooterTint);
+      syncFooterTint();
     </script>
   </body>
 </html>
