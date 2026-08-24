@@ -9,6 +9,7 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "noUncheckedIndexedAccess": true,
+    "types": [],
     "strict": true
   },
   "include": ["src/**/*"]
