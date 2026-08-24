@@ -264,6 +264,25 @@ resolveFromColor({ hex: '#3F8F8C', total: 9 });
 //   }
 ```
 
+## Demo notes (this fork)
+
+The bundled demo page (`dist/index.html`) intentionally deviates from library
+defaults:
+
+- `total` slider is capped at **3…12** (the library allows up to 35)
+- all sliders with sub-0.01 steps are coarsened to **0.01** increments
+  (`centerHue` keeps its native 0.1 step)
+- when **Pin to Color** is on, the five sliders that no longer affect the ramp
+  (`centerHue`, `minSaturation`, `minLight`, `maxSaturation`, `maxLight`) are
+  hidden — their values are derived from the pinned hex color instead
+- in pin mode, the curve preview draws using the boxes solved by
+  `resolveFromColor()` rather than the hidden slider values
+- palette sample tiles are dealt with a WCAG contrast bias: slot one is random
+  from the shuffle, later slots are drawn from the three highest-contrast
+  candidates already on the tile
+
+These are demo-side overrides only; none of them change the published API.
+
 ## Reading and Inspiration
 
 - Video: [Hue Shifting in Pixel Art](https://www.youtube.com/watch?v=PNtMAxYaGyg) by [Brandon James Greer](https://twitter.com/BJGpixel)

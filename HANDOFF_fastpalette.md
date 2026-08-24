@@ -1,5 +1,12 @@
 # Handoff: `generateFromColor` — FettePalette fork feature
 
+> **✅ IMPLEMENTED** — landed in `ca96da1` (plus follow-ups `d802ad0`, `74ab3d0`,
+> `cd6646b`). The real API differs from the pseudocode below: `targetIndex`
+> became `anchor: number | "auto"`, and the feature ships with `resolveFromColor()`,
+> auto-anchor scoring, hue-cycle inversion and a vitest suite.
+> Authoritative sources: `src/generateFromColor.ts`, `tests/generateFromColor.test.ts`.
+> This document is kept only for its problem statement and mathematical rationale.
+
 **Repository:** `dejerson/fastpalette` (fork of `meodai/fettepalette`)  
 **Goal:** Add one new exported function that takes a single hex color and returns a full
 color ramp where one of the base swatches is *exactly* the input color. Wire a working
