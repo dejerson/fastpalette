@@ -272,14 +272,16 @@ defaults:
 - `total` slider is capped at **3…12** (the library allows up to 35)
 - all sliders with sub-0.01 steps are coarsened to **0.01** increments
   (`centerHue` keeps its native 0.1 step)
-- when **Pin to Color** is on, the five sliders that no longer affect the ramp
-  (`centerHue`, `minSaturation`, `minLight`, `maxSaturation`, `maxLight`) are
-  hidden — their values are derived from the pinned hex color instead
-- in pin mode, the curve preview draws using the boxes solved by
-  `resolveFromColor()` rather than the hidden slider values
-- the **Position in ramp** selector is hidden — auto best-fit always picks
-  the anchor slot; the resolved slot and `centerHue` remain visible in the
-  meta readout
+- the demo boots from the library's param defaults — no preset hex; the hex
+  field starts as the middle swatch of that default ramp
+- the hex color and the five derived sliders (`centerHue`, `minSaturation`,
+  `minLight`, `maxSaturation`, `maxLight`) stay in two-way sync with no pin
+  toggle: editing the hex re-solves the sliders via `resolveFromColor()`;
+  dragging any slider redraws and mirrors the anchor-slot color into the
+  hex field without ever moving the sliders themselves
+- the auto best-fit anchor slot is always visible: as `(n)` appended to the
+  **baseColor** label, as a hollow outline on that point in the curve preview
+  and as a hollow-ring inset on that swatch in the Base Colors list
 - option settings such as **curve method** are picked from a segmented button
   row instead of a dropdown
 - page and sidebar use custom overlay scrollbars: 6px pills that fade while

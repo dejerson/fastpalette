@@ -8,22 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Demo page: Pin-to-Color mode is replaced by an always-on **baseColor**
+  control at the top of Settings — there is no toggle anymore. The hex field
+  and the five derived sliders (`centerHue`, `minSaturation`, `minLight`,
+  `maxSaturation`, `maxLight`) stay in two-way sync: typing a hex re-solves
+  the sliders via `resolveFromColor()`, while dragging a slider redraws and
+  mirrors the color at the anchor slot into the hex field without ever moving
+  the sliders themselves.
+- Demo page: the auto best-fit anchor slot is always visible — as `(n)` in the
+  baseColor label, as a hollow outline on that point in the curve preview and
+  as a hollow-ring inset on that swatch in the Base Colors list.
+- Demo page: boots from the library's param defaults; the hex field starts as
+  the middle swatch of that default ramp; `total` renders first in the pane;
+  the exported code snippet shows `generateRandomColorRamp()` with the current
+  resolved values and annotates the resolved slot.
+- Demo page: rebranded to **FastPalette** across title, meta tags, headings
+  and about copy; the About block moves below the Function Call snippet and
+  the footer is hidden.
 - Demo page: native scrollbars are replaced with JS-drawn overlay thumbs on
   both the page and the settings sidebar — 6px pills that fade out while idle,
   brighten on hover, are draggable, and flip light once the page scrolls into
   the dark names/footer zone.
 - Demo page: option-type settings (e.g. curve method) render as a segmented
   row of buttons with a pressed state instead of a `<select>` dropdown.
-- Demo page: the Pin-to-Color toggle is restyled as a switch, the redundant
-  "Position in ramp" selector is hidden (auto best-fit always picks the slot;
-  resolved slot and `centerHue` stay visible in the meta readout) and the
-  Function Call snippet moves below the pin panel.
 
 ### Internal
 
 - Agent guardrails: `AGENTS.md` marks the local-only `archive/` folder as out
-  of bounds for coding agents, and `.opencode/opencode.json` hard-denies
-  OpenCode edits under `archive/**`. macOS `.DS_Store` files are ignored.
+  of bounds for coding agents and routes them straight to where work happens
+  (`src/`, `tests/`, `dist/index.html`); `.opencode/opencode.json` hard-denies
+  OpenCode reads *and* edits under `archive/**`. macOS `.DS_Store` files are
+  ignored.
 
 ## [3.4.0] - 2026-08-24
 
