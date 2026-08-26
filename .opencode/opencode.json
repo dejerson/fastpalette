@@ -6,11 +6,11 @@
       "*.env": "deny",
       "*.env.*": "deny",
       "*.env.example": "allow",
-      "archive/**": "deny"
+      ".archive/**": "deny"
     },
     "edit": {
       "*": "allow",
-      "archive/**": "deny"
+      ".archive/**": "deny"
     }
   }
 }

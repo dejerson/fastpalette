@@ -34,10 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
-- Agent guardrails: `AGENTS.md` marks the local-only `archive/` folder as out
-  of bounds for coding agents and routes them straight to where work happens
-  (`src/`, `tests/`, `dist/index.html`); `.opencode/opencode.json` hard-denies
-  OpenCode reads *and* edits under `archive/**`. macOS `.DS_Store` files are
+- Agent guardrails: `.archive/` is a hidden dot-directory outside gitignore and
+  out of bounds for coding agents, and `.opencode/opencode.json` hard-denies
+  OpenCode reads *and* edits under `.archive/**`. macOS `.DS_Store` files are
   ignored.
 
 ## [3.4.0] - 2026-08-24

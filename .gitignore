@@ -103,7 +103,7 @@ typings/
 .tern-port
 
 # local reference material — never commit
-archive/
+.archive/
 
 # macOS
 .DS_Store
