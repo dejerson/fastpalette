@@ -4,9 +4,9 @@
   <head>
     <meta charset="utf-8" />
     <!-- Primary Meta Tags -->
-    <title>FettePalette — Color ramp generator using curves within the HSV color model</title>
-    <meta name="title" content="FettePalette — Color ramp generator using curves within the HSV color model">
-    <meta name="description" content="FettePalette is lightweight, dependency free and fast JavaScript function written in TypeScript. It generates color ramps based on a curve within the HSV color model. This page serves as preview for the variety of options the function takes.">
+    <title>FastPalette — Color ramp generator using curves within the HSV color model</title>
+    <meta name="title" content="FastPalette — Color ramp generator using curves within the HSV color model">
+    <meta name="description" content="FastPalette is lightweight, dependency free and fast JavaScript function written in TypeScript. It generates color ramps based on a curve within the HSV color model. This page serves as preview for the variety of options the function takes.">
     <meta name="keywords" content="color, colour, generative, generative-art, generative-design, palette, colorpalette">
     
     <link rel="icon" type="image/png" href="https://meodai.github.io/fettepalette/favicon.png" />
@@ -14,15 +14,15 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://meodai.github.io/fettepalette/">
-    <meta property="og:title" content="FettePalette — Color ramp generator using curves within the HSV color model">
-    <meta property="og:description" content="FettePalette is lightweight, dependency free and fast JavaScript function written in TypeScript. It generates color ramps based on a curve within the HSV color model. This page serves as preview for the variety of options the function takes.">
+    <meta property="og:title" content="FastPalette — Color ramp generator using curves within the HSV color model">
+    <meta property="og:description" content="FastPalette is lightweight, dependency free and fast JavaScript function written in TypeScript. It generates color ramps based on a curve within the HSV color model. This page serves as preview for the variety of options the function takes.">
     <meta property="og:image" content="https://meodai.github.io/fettepalette/socialfb.png">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://meodai.github.io/fettepalette/">
-    <meta property="twitter:title" content="FettePalette — Color ramp generator using curves within the HSV color model">
-    <meta property="twitter:description" content="FettePalette is lightweight, dependency free and fast JavaScript function written in TypeScript. It generates color ramps based on a curve within the HSV color model. This page serves as preview for the variety of options the function takes.FettePalette is lightweight, dependency free and fast JavaScript function written in TypeScript. It generates color ramps based on a curve within the HSV color model. This page serves as preview for the variety of options the function takes.">
+    <meta property="twitter:title" content="FastPalette — Color ramp generator using curves within the HSV color model">
+    <meta property="twitter:description" content="FastPalette is lightweight, dependency free and fast JavaScript function written in TypeScript. It generates color ramps based on a curve within the HSV color model. This page serves as preview for the variety of options the function takes.FastPalette is lightweight, dependency free and fast JavaScript function written in TypeScript. It generates color ramps based on a curve within the HSV color model. This page serves as preview for the variety of options the function takes.">
     <meta property="twitter:image" content="https://meodai.github.io/fettepalette/socialfb.png">
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -321,6 +321,13 @@
         height: calc(1.2em - 4px);
         background: var(--coltext);
       }
+      /* anchor slot in the base column: hollow ring echoing the outlined
+         swatch in the curve preview — white casing around a dark hairline */
+      .swatch--anchor::before {
+        box-shadow:
+          inset 0 0 0 3px #fff,
+          inset 0 0 0 4px #202126;
+      }
 
       .color-info {
         padding: 0.5rem;
@@ -361,11 +368,13 @@
       }
 
       .pane__section,
-      .pane__label {
+      .pane__label,
+      .pin__label {
         display: block;
       }
 
-      .pane__label {
+      .pane__label,
+      .pin__label {
         font-size: 0.8rem;
         font-weight: 400;
         line-height: 1;
@@ -554,10 +563,10 @@
         appearance: none;
         box-sizing: border-box;
         background-color: transparent;
-        color: var(--color-inverted);
+        color: var(--color-inverted, #fff);
         border: none;
         border-radius: 0;
-        box-shadow: 0 1px 0 0 var(--color-inverted);
+        box-shadow: 0 1px 0 0 var(--color-inverted, #fff);
         font-family: "Space Mono", monospace;
         font-size: 0.8em;
         padding: 0.25rem 0;
@@ -578,84 +587,21 @@
       }
 
       .pin {
-        border-top: 1px solid #3a3b40;
-        margin-top: 2rem;
-        padding-top: 1.5rem;
+        margin-bottom: calc(var(--size-gutter, 1rem) * 2);
       }
-      .pin__toggle {
-        position: relative;
-        display: inline-block;
-        box-sizing: border-box;
-        width: 2.6rem;
-        height: 1.4rem;
-        cursor: pointer;
-      }
-      .pin__toggle input {
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
-      }
-      .pin__toggle::before,
-      .pin__toggle::after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        transition: 150ms background-color, 150ms left;
-      }
-      .pin__toggle::before {
-        left: 0;
-        box-sizing: border-box;
-        width: 2.6rem;
-        height: 1.4rem;
-        border: 1px solid #fff;
-        border-radius: 999px;
-        background: transparent;
-      }
-      .pin__toggle::after {
-        left: 0.25rem;
-        width: 0.9rem;
-        height: 0.9rem;
-        border-radius: 50%;
-        background: #fff;
-      }
-      .pin__toggle:focus-within::before {
-        outline: 1px solid #fff;
-        outline-offset: 2px;
-      }
-      .pin--on .pin__toggle::before {
-        background: #fff;
-      }
-      .pin--on .pin__toggle::after {
-        left: calc(100% - 1.15rem);
-        background: #202124;
-      }
-      .pin__controls {
-        display: none;
-        margin-top: 1rem;
-      }
-      .pin--on .pin__controls {
-        display: block;
-      }
-      /* anchor picker is redundant while "auto" is the default; the resolved
-         slot + centerHue stay visible in the meta readout below */
-      .pin__field--anchor {
-        display: none;
-      }
-      .pin__color-row {
+      /* one row: color picker · hex value */
+      .pin__row {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        margin-bottom: 1rem;
       }
       .pin__swatch {
         position: relative;
-        width: 2.4rem;
-        height: 2.4rem;
+        width: 1.6rem;
+        height: 1.6rem;
         padding: 0;
-        border: 1px solid #fff;
-        background: #3f8f8c;
+        border: 1px solid var(--color-inverted, #fff);
+        background: #35b435;
         overflow: hidden;
         flex: 0 0 auto;
         cursor: pointer;
@@ -669,6 +615,7 @@
         cursor: pointer;
       }
       .pin__hex {
+        align-self: flex-end;
         flex: 1 1 auto;
         min-width: 0;
         box-sizing: border-box;
@@ -683,25 +630,6 @@
       }
       .pin__hex:focus {
         outline: none;
-      }
-      .pin__field label,
-      .pin__meta {
-        display: block;
-      }
-      .pin__field label {
-        font-size: 0.8rem;
-        font-weight: 400;
-        line-height: 1;
-        margin-bottom: 0.8em;
-      }
-      .pin__field select {
-        margin-bottom: 1rem;
-      }
-      .pin__meta {
-        font-size: 0.65rem;
-        line-height: 1.6;
-        opacity: 0.75;
-        word-break: break-all;
       }
 
       svg:not(:root) {
@@ -740,6 +668,11 @@
         color: #fff;
       }
 
+      /* footer contents hidden */
+      footer {
+        display: none;
+      }
+
       .ellogo {
         display: block;
         width: 40%;
@@ -752,43 +685,19 @@
     <article class="app">
       <section class="settings">
         <aside>
-          <h3>About</h3>
-          <p>
-            FettePalette is lightweight, dependency free and fast JavaScript
-            function written in TypeScript. It generates color ramps based on a
-            curve within the HSV color model. This page serves as preview for
-            the variety of options the function takes.
-          </p>
-          <a class="projectlink" href="https://github.com/meodai/fettepalette">Github</a>
-        </aside>
-        <aside class="pin" id="pinSection">
-          <h3>Pin to Color</h3>
-          <label class="pin__toggle">
-            <input type="checkbox" id="pinEnabled" />
-          </label>
-          <p style="font-size: 0.7em; margin-top: 0.5em">
-            Anchor the whole ramp on one exact hex. The best-fitting slot is
-            picked automatically.
-          </p>
-          <div class="pin__controls" id="pinControls">
-            <div class="pin__color-row">
-              <span class="pin__swatch" id="pinSwatch">
-                <input type="color" id="pinColorNative" value="#3F8F8C" />
-              </span>
-              <input type="text" class="pin__hex" id="pinHexText"
-                     value="#3F8F8C" maxlength="7"
-                     spellcheck="false" autocomplete="off" />
-            </div>
-            <div class="pin__field pin__field--anchor">
-              <label for="pinTargetIndex">Position in ramp</label>
-              <select id="pinTargetIndex"></select>
-            </div>
-            <div class="pin__meta" id="pinMeta"></div>
-          </div>
-        </aside>
-        <aside>
           <h3>Settings</h3>
           <div class="settings__inner">
+            <div class="pin" id="pinSection">
+              <strong class="pin__label" id="pinLabel">baseColor</strong>
+              <div class="pin__row">
+                <span class="pin__swatch" id="pinSwatch">
+                  <input type="color" id="pinColorNative" value="#35B435" />
+                </span>
+                <input type="text" class="pin__hex" id="pinHexText"
+                       value="#35B435" maxlength="7"
+                       spellcheck="false" autocomplete="off" />
+              </div>
+            </div>
             <div data-pane></div>
           </div>
         </aside>
@@ -797,6 +706,16 @@
           <code>
             <pre data-code></pre>
           </code>
+        </aside>
+        <aside>
+          <h3>About</h3>
+          <p>
+            FastPalette is lightweight, dependency free and fast JavaScript
+            function written in TypeScript. It generates color ramps based on a
+            curve within the HSV color model. This page serves as preview for
+            the variety of options the function takes.
+          </p>
+          <a class="projectlink" href="https://github.com/meodai/fettepalette">Github</a>
         </aside>
         <footer>
           <a href="https://www.elastiq.ch/" hreflang="en" class="ellogo"><svg xmlns="http://www.w3.org/2000/svg"
@@ -816,10 +735,10 @@
           </footer>
       </section>
       <section class="main">
-        <h1>Fette&shy;Palette</h1>
+        <h1>Fast&shy;Palette</h1>
 
         <!--p>
-        <mark>Fette­Palette</mark> is a function that returns an object containing
+        <mark>Fast­Palette</mark> is a function that returns an object containing
         as many base colors, tints and shades as set in <code>colors</code>.
       </p-->
         <aside class="section">
@@ -1247,7 +1166,8 @@
         }
       });
 
-      Object.keys(generateRandomColorRampParams).forEach((key) => {
+      const paramKeys = Object.keys(generateRandomColorRampParams);
+      ["total", ...paramKeys.filter((k) => k !== "total")].forEach((key) => {
         const param = generateRandomColorRampParams[key];
         PARAMS[key] = param.default;
         pane.addInput(PARAMS, key, param.props);
@@ -1257,40 +1177,28 @@
         options: ['hsl', 'oklch', 'lch']
       });
 
-      // ── Pin to Color ─────────────────────────────────────────────────────
+      // ── baseColor ────────────────────────────────────────────────────────
 
-      const $pinSection = document.getElementById("pinSection");
-      const $pinEnabled = document.getElementById("pinEnabled");
-      const $pinControls = document.getElementById("pinControls");
       const $pinSwatch = document.getElementById("pinSwatch");
       const $pinColorNative = document.getElementById("pinColorNative");
       const $pinHexText = document.getElementById("pinHexText");
-      const $pinTargetIndex = document.getElementById("pinTargetIndex");
-      const $pinMeta = document.getElementById("pinMeta");
+      const $pinLabel = document.getElementById("pinLabel");
 
-      let pinResolution = null;
+      // two-way sync, no pin toggle: the sliders and the hex describe each
+      // other. dragging any slider redraws the ramp and mirrors the color
+      // at the anchor slot into the hex field; typing a hex re-solves the
+      // five derived sliders via resolveFromColor(). the label always shows
+      // the auto best-fit slot for the current params.
+      let currentHex = "";
+      let anchorIndex = null;
 
-      const pinned = () => $pinEnabled.checked;
-
-      // sliders that have no effect in pin mode — their values are derived
-      // from the pinned hex instead of PARAMS
-      const pinDeadSections = [
+      const DERIVED_KEYS = [
         "centerHue",
         "minSaturation",
         "minLight",
         "maxSaturation",
         "maxLight",
-      ].map(
-        (key) =>
-          document.querySelector(`[data-pane] input[data-key="${key}"]`)
-            ?.closest(".pane__section")
-      );
-
-      function syncPinSliderVisibility() {
-        pinDeadSections.forEach(($s) => {
-          if ($s) $s.style.display = pinned() ? "none" : "";
-        });
-      }
+      ];
 
       function parseHexInput(raw) {
         const m = String(raw).trim().match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i);
@@ -1306,48 +1214,8 @@
         $pinSwatch.style.background = hex;
       }
 
-      function currentAnchorOption() {
-        if (!$pinTargetIndex.value || $pinTargetIndex.value === "auto") return "auto";
-        return parseInt($pinTargetIndex.value, 10);
-      }
-
-      function rebuildIndexOptions() {
-        const total = PARAMS.total;
-        const prev = $pinTargetIndex.value;
-        const mid = Math.floor((total + 1) / 2);
-
-        let html = `<option value="auto">Auto — best fit</option>`;
-        for (let i = 1; i <= total; i++) {
-          html += `<option value="${i}">${i === mid ? `${i} — middle` : i}</option>`;
-        }
-        $pinTargetIndex.innerHTML = html;
-
-        const stillThere = Array.from($pinTargetIndex.options)
-          .some((o) => o.value === prev);
-        if (stillThere) {
-          $pinTargetIndex.value = prev;
-        } else {
-          $pinTargetIndex.value = "auto";
-        }
-      }
-
-      function updatePinMeta() {
-        if (!pinResolution) {
-          $pinMeta.innerHTML = "";
-          return;
-        }
-        const r = pinResolution;
-        const [minS, minL] = r.minSaturationLight;
-        const [maxS, maxL] = r.maxSaturationLight;
-        $pinMeta.innerHTML =
-          `resolved slot <strong>${r.anchorIndex}</strong> · ` +
-          `centerHue ${r.centerHue.toFixed(2)}°<br>` +
-          `sat box [${minS.toFixed(3)}, ${maxS.toFixed(3)}] · ` +
-          `light box [${minL.toFixed(3)}, ${maxL.toFixed(3)}]`;
-      }
-
-      function computeRamp() {
-        const shared = {
+      function sharedParams() {
+        return {
           total: Number(PARAMS.total),
           curveMethod: PARAMS.curveMethod,
           curveAccent: Number(PARAMS.curveAccent),
@@ -1359,54 +1227,94 @@
           offsetCurveModShade: Number(PARAMS.offsetCurveModShade),
           colorModel: outputModel === 'hsl' ? 'hsl' : 'hsv',
         };
+      }
 
-        if (!pinned()) {
-          pinResolution = null;
-          updatePinMeta();
-          return generateRandomColorRamp({
-            ...shared,
-            centerHue: PARAMS.centerHue,
-            minSaturationLight: [PARAMS.minSaturation, PARAMS.minLight],
-            maxSaturationLight: [PARAMS.maxSaturation, PARAMS.maxLight],
-          });
-        }
-
-        const anchor = currentAnchorOption();
-
-        pinResolution = resolveFromColor({
-          hex: $pinHexText.value,
-          anchor,
-          ...shared,
-        });
-
-        updatePinMeta();
-
-        return generateFromColor({
-          hex: $pinHexText.value,
-          anchor,
-          ...shared,
+      // write resolved values into PARAMS and the pane inputs directly —
+      // programmatic assignment fires no events, so this never re-triggers
+      // a render loop
+      function applyResolvedValues(r) {
+        const values = {
+          centerHue: r.centerHue.toFixed(2),
+          minSaturation: r.minSaturationLight[0].toFixed(3),
+          minLight: r.minSaturationLight[1].toFixed(3),
+          maxSaturation: r.maxSaturationLight[0].toFixed(3),
+          maxLight: r.maxSaturationLight[1].toFixed(3),
+        };
+        DERIVED_KEYS.forEach((key) => {
+          PARAMS[key] = Number(values[key]);
+          const $number = document.getElementById(`pane--${key}--value`);
+          if ($number) $number.value = values[key];
+          const $range = document.querySelector(
+            `[data-pane] input[data-key="${key}"][type="range"]`
+          );
+          if ($range) $range.value = values[key];
         });
       }
 
-      $pinEnabled.addEventListener("change", () => {
-        $pinSection.classList.toggle("pin--on", pinned());
-        $pinControls.style.display = pinned() ? "" : "none";
-        syncPinSliderVisibility();
+      function updateAnchorLabel() {
+        $pinLabel.textContent = anchorIndex
+          ? `baseColor (${anchorIndex})`
+          : "baseColor";
+      }
+
+      // hex is the source of truth: solve the five derived sliders,
+      // place the anchor marker, then draw. only ever called from explicit
+      // hex edits — never while a slider is being dragged.
+      function syncFromHex() {
+        const r = resolveFromColor({
+          hex: currentHex,
+          ...sharedParams(),
+        });
+        anchorIndex = r.anchorIndex;
+        applyResolvedValues(r);
+        updateAnchorLabel();
         bam();
-      });
+      }
+
+      // params are the source of truth: redraw, re-name the best-fit
+      // anchor slot, then mirror the color at that slot into the hex
+      // field. deliberately never touches the sliders, so drags always
+      // feel live and stay exactly where the user puts them.
+      function refreshFromParams() {
+        bam();
+        const r = resolveFromColor({
+          hex: currentHex,
+          ...sharedParams(),
+        });
+        anchorIndex = r.anchorIndex;
+        const c = colors.base[anchorIndex - 1];
+        if (c && c.hex) {
+          currentHex = c.hex.toLowerCase();
+          syncHex(currentHex);
+        }
+        updateAnchorLabel();
+      }
+
+      function computeRamp() {
+        return generateRandomColorRamp({
+          ...sharedParams(),
+          centerHue: PARAMS.centerHue,
+          minSaturationLight: [PARAMS.minSaturation, PARAMS.minLight],
+          maxSaturationLight: [PARAMS.maxSaturation, PARAMS.maxLight],
+        });
+      }
 
       $pinColorNative.addEventListener("input", () => {
-        syncHex($pinColorNative.value);
-        bam();
+        const hex = parseHexInput($pinColorNative.value);
+        if (!hex) return;
+        currentHex = hex;
+        syncHex(hex);
+        syncFromHex();
       });
 
       const commitHexText = () => {
         const hex = parseHexInput($pinHexText.value);
         if (hex) {
+          currentHex = hex;
           syncHex(hex);
-          bam();
+          syncFromHex();
         } else {
-          $pinHexText.value = $pinColorNative.value.toUpperCase();
+          $pinHexText.value = currentHex.toUpperCase();
         }
       };
 
@@ -1417,12 +1325,6 @@
         }
       });
       $pinHexText.addEventListener("blur", commitHexText);
-
-      $pinTargetIndex.addEventListener("change", bam);
-
-      rebuildIndexOptions();
-      syncHex($pinColorNative.value);
-      syncPinSliderVisibility();
 
       const $pal = document.querySelector("[data-palette]");
       const $picker = document.querySelector("[data-figure]");
@@ -1580,19 +1482,9 @@
 
         document.querySelector(
           "[data-code]"
-        ).innerHTML = pinned()
-          ? `generateFromColor({
-  hex: '${$pinHexText.value.toUpperCase()}',
+        ).innerHTML = `generateRandomColorRamp({
   total: ${PARAMS.total},
-  anchor: ${currentAnchorOption() === "auto" ? "'auto'" : currentAnchorOption()},
-  curveMethod: '${PARAMS.curveMethod}',
-  curveAccent: ${PARAMS.curveAccent},
-  hueCycle: ${PARAMS.hueCycle},
-});
-// → slot ${pinResolution.anchorIndex} · centerHue ${pinResolution.centerHue.toFixed(2)}°`
-          : `generateRandomColorRamp({
-  total: ${PARAMS.total},
-  centerHue: ${PARAMS.centerHue},
+  centerHue: ${Number(PARAMS.centerHue).toFixed(2)},
   hueCycle: ${PARAMS.hueCycle},
   curveMethod: '${PARAMS.curveMethod}',
   curveAccent: ${PARAMS.curveAccent},
@@ -1601,13 +1493,15 @@
   tintShadeHueShift: ${PARAMS.tintShadeHueShift},
   offsetCurveModTint: ${PARAMS.offsetCurveModTint},
   offsetCurveModShade: ${PARAMS.offsetCurveModShade},
-  minSaturationLight: [${PARAMS.minSaturation}, ${PARAMS.minLight}],
-  maxSaturationLight: [${PARAMS.maxSaturation}, ${PARAMS.maxLight}],
+  minSaturationLight: [${Number(PARAMS.minSaturation).toFixed(3)}, ${Number(
+          PARAMS.minLight
+        ).toFixed(3)}],
+  maxSaturationLight: [${Number(PARAMS.maxSaturation).toFixed(3)}, ${Number(
+          PARAMS.maxLight
+        ).toFixed(3)}],
 });
-`;
+// → slot ${anchorIndex} · centerHue ${Number(PARAMS.centerHue).toFixed(2)}°`;
 
-        // in pin mode the curve preview must use the solved boxes from
-        // resolveFromColor, not the (hidden) PARAMS sliders
         points(
           PARAMS.total,
           PARAMS.offsetTint,
@@ -1617,12 +1511,8 @@
           PARAMS.curveMethod,
           PARAMS.offsetCurveModTint,
           PARAMS.offsetCurveModShade,
-          pinned() && pinResolution
-            ? pinResolution.minSaturationLight
-            : [PARAMS.minSaturation, PARAMS.minLight],
-          pinned() && pinResolution
-            ? pinResolution.maxSaturationLight
-            : [PARAMS.maxSaturation, PARAMS.maxLight]
+          [PARAMS.minSaturation, PARAMS.minLight],
+          [PARAMS.maxSaturation, PARAMS.maxLight]
         );
 
 
@@ -1705,9 +1595,26 @@
           newElement.style.fill = `hsl(${colorsArr[i - 1].hsl[0]}deg,${
             hsl[1] * 100
           }%,${hsl[2] * 100}%)`;
-          newElement.style.fill = colorsArr[i - 1].css;
-          newElement.style.stroke = "#202126";
-          newElement.style.strokeWidth = ".25px";
+          // the anchor slot renders as a hollow outline instead of a
+          // filled dot: white casing underneath, dark core on top so the
+          // outline stays visible on any part of the gradient square
+          let pinnedCasing = null;
+          if (i === anchorIndex) {
+            pinnedCasing = document.createElementNS(xmlns, "circle");
+            pinnedCasing.setAttribute("cx", x * 100);
+            pinnedCasing.setAttribute("cy", 100 - y * 100);
+            pinnedCasing.setAttribute("r", "3");
+            pinnedCasing.style.fill = "none";
+            pinnedCasing.style.stroke = "#fff";
+            pinnedCasing.style.strokeWidth = ".95px";
+            newElement.style.fill = "none";
+            newElement.style.stroke = "#202126";
+            newElement.style.strokeWidth = ".5px";
+          } else {
+            newElement.style.fill = colorsArr[i - 1].css;
+            newElement.style.stroke = "#202126";
+            newElement.style.strokeWidth = ".25px";
+          }
 
           const [xl, yl] = pointOnCurve(
             curveMethod,
@@ -1755,18 +1662,21 @@
           newElementDark.style.strokeWidth = ".1px";
           newElementDark.style.stroke = "#fff";
 
+          if (pinnedCasing) $picker.appendChild(pinnedCasing);
           $picker.appendChild(newElement);
           $picker.appendChild(newElementLight);
           $picker.appendChild(newElementDark);
         }
       }
 
-      const printColors = (arr, simple, names) =>
+      const printColors = (arr, simple, names, highlight = -1) =>
         arr
           .map(({ hsl, rgb, hex, contrast, css }, i) => {
             if (simple) {
               return `
-          <li class="swatch swatch--simple" style="--col:${css}; --coltext: ${
+          <li class="swatch swatch--simple${
+            i === highlight ? " swatch--anchor" : ""
+          }" style="--col:${css}; --coltext: ${
                 contrast.black > contrast.white ? "#202125" : "#fff"
               }">
             <div data-copy title="Click to copy">${Math.floor(
@@ -1815,7 +1725,7 @@
         </div>
         <div>
           <h3>Base Colors</h3>
-          <ol>${printColors(colors.base, true)}</ol>
+          <ol>${printColors(colors.base, true, null, anchorIndex - 1)}</ol>
         </div>
         <div>
           <h3>Dark Colors</h3>
@@ -1855,8 +1765,7 @@
       $pal.addEventListener("pointerup", () => clearInterval(timer));
 
       pane.on("change", () => {
-        rebuildIndexOptions();
-        bam();
+        refreshFromParams();
       });
 
       document.documentElement.addEventListener("pointerdown", e => {
@@ -1887,7 +1796,17 @@
         });
       }
 
+      // boot from the library param defaults: draw the default ramp and
+      // make the hex field show its middle swatch — the preview color the
+      // slider set produces out of the box. the anchor slot is locked to
+      // that same middle position so hex, label and circle all agree.
+      // sliders are never rewritten here, so they sit exactly at defaults.
       bam();
+      anchorIndex = Math.floor((Number(PARAMS.total) + 1) / 2);
+      const startColor = colors.base[anchorIndex - 1];
+      currentHex = startColor.hex.toLowerCase();
+      syncHex(currentHex);
+      updateAnchorLabel();
 
       // ── overlay scrollbars ───────────────────────────────────────────────
       // both native bars are hidden via CSS; these draw floating 6px thumbs
