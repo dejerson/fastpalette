@@ -397,6 +397,36 @@
       .pane__section + .pane__section {
         margin-top: calc(var(--size-gutter) * 2);
       }
+      .pane__section--disabled {
+        opacity: 0.4;
+        pointer-events: none;
+      }
+      .pin__checkbox {
+        appearance: none;
+        -webkit-appearance: none;
+        box-sizing: border-box;
+        width: 1rem;
+        height: 1rem;
+        margin: 0;
+        flex: 0 0 auto;
+        border: 1px solid var(--color-inverted, #fff);
+        border-radius: 0;
+        background: transparent;
+        cursor: pointer;
+        display: inline-grid;
+        place-content: center;
+      }
+      .pin__checkbox:checked::before {
+        content: "";
+        width: 0.6rem;
+        height: 0.6rem;
+        background: currentColor;
+        clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+      }
+      .pin__checkbox:focus-visible {
+        outline: 1px solid var(--color-inverted, #fff);
+        outline-offset: 2px;
+      }
       .pane__inputs {
         display: flex;
         touch-action: manipulation;
@@ -690,6 +720,7 @@
             <div class="pin" id="pinSection">
               <strong class="pin__label" id="pinLabel">baseColor</strong>
               <div class="pin__row">
+                <input type="checkbox" id="pinEnabled" class="pin__checkbox" />
                 <span class="pin__swatch" id="pinSwatch">
                   <input type="color" id="pinColorNative" value="#35B435" />
                 </span>
@@ -1183,12 +1214,17 @@
       const $pinColorNative = document.getElementById("pinColorNative");
       const $pinHexText = document.getElementById("pinHexText");
       const $pinLabel = document.getElementById("pinLabel");
+      const $pinEnabled = document.getElementById("pinEnabled");
 
-      // two-way sync, no pin toggle: the sliders and the hex describe each
-      // other. dragging any slider redraws the ramp and mirrors the color
-      // at the anchor slot into the hex field; typing a hex re-solves the
-      // five derived sliders via resolveFromColor(). the label always shows
-      // the auto best-fit slot for the current params.
+      // two pin modes:
+      //   OFF (default): two-way "describe". dragging a slider redraws the
+      //     ramp and mirrors the color at the anchor slot into the hex field;
+      //     typing a hex re-solves the five derived sliders via
+      //     resolveFromColor(). the label always shows the auto best-fit slot.
+      //   ON: the hex is the source of truth and is NEVER overwritten. every
+      //     param change re-resolves the five derived sliders around the pinned
+      //     hex so it stays exact regardless of slot/curveAccent/hueCycle.
+      let pinActive = false;
       let currentHex = "";
       let anchorIndex = null;
 
@@ -1199,6 +1235,20 @@
         "maxSaturation",
         "maxLight",
       ];
+
+      function updateCheckboxStyle() {
+        const on = pinActive && currentHex;
+        const color = on ? currentHex : "transparent";
+        $pinEnabled.style.backgroundColor = color;
+        $pinEnabled.style.borderColor = on ? currentHex : "";
+      }
+
+      function setDerivedSlidersDisabled(disabled) {
+        DERIVED_KEYS.forEach((key) => {
+          const $sec = document.getElementById(`pane--${key}`)?.closest(".pane__section");
+          if ($sec) $sec.classList.toggle("pane__section--disabled", disabled);
+        });
+      }
 
       function parseHexInput(raw) {
         const m = String(raw).trim().match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i);
@@ -1212,6 +1262,7 @@
         $pinHexText.value = hex.toUpperCase();
         $pinColorNative.value = hex.toLowerCase();
         $pinSwatch.style.background = hex;
+        updateCheckboxStyle();
       }
 
       function sharedParams() {
@@ -1267,6 +1318,7 @@
         });
         anchorIndex = r.anchorIndex;
         applyResolvedValues(r);
+        if (pinActive) setDerivedSlidersDisabled(true);
         updateAnchorLabel();
         bam();
       }
@@ -1276,6 +1328,20 @@
       // field. deliberately never touches the sliders, so drags always
       // feel live and stay exactly where the user puts them.
       function refreshFromParams() {
+        if (pinActive) {
+          const r = resolveFromColor({
+            hex: currentHex,
+            anchor: "auto",
+            ...sharedParams(),
+          });
+          anchorIndex = r.anchorIndex;
+          applyResolvedValues(r);
+          updateCheckboxStyle();
+          bam();
+          updateAnchorLabel();
+          return;
+        }
+
         bam();
         const r = resolveFromColor({
           hex: currentHex,
@@ -1325,6 +1391,26 @@
         }
       });
       $pinHexText.addEventListener("blur", commitHexText);
+
+      $pinEnabled.addEventListener("change", () => {
+        pinActive = $pinEnabled.checked;
+
+        if (pinActive) {
+          if (!currentHex) {
+            const c = colors.base[anchorIndex - 1];
+            if (c && c.hex) {
+              currentHex = c.hex.toLowerCase();
+              syncHex(currentHex);
+            }
+          }
+          syncFromHex();
+          setDerivedSlidersDisabled(true);
+        } else {
+          setDerivedSlidersDisabled(false);
+          updateCheckboxStyle();
+          bam();
+        }
+      });
 
       const $pal = document.querySelector("[data-palette]");
       const $picker = document.querySelector("[data-figure]");
