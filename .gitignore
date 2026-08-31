@@ -105,5 +105,9 @@ typings/
 # local reference material — never commit
 .archive/
 
+# opencode runtime session database
+.opencode/opencode.db
+.opencode/opencode.db-*
+
 # macOS
 .DS_Store
