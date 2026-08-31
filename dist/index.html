@@ -267,6 +267,25 @@
         bottom: 0;
         background: var(--col-3);
       }
+      .fp-tip {
+        position: fixed;
+        z-index: 9999;
+        font-family: "Space Mono", monospace;
+        font-size: 0.7rem;
+        line-height: 1;
+        padding: 3px 6px;
+        border-radius: 3px;
+        color: #111;
+        background: rgba(255, 255, 255, 0.92);
+        pointer-events: none;
+        opacity: 0;
+        transform: translate(10px, 12px);
+        transition: opacity 0.05s linear;
+      }
+      .fp-tip--invert {
+        color: #fff;
+        background: rgba(0, 0, 0, 0.75);
+      }
 
       figure {
         margin: 0;
@@ -1457,16 +1476,18 @@
         let localcolors = [...allColors];
         $pal.innerHTML = "";
 
-        $pal.appendChild(paletteDom(dealContrastFour(localcolors), 1));
+        // top rows get the strictly contrast-optimized tiles
+        $pal.appendChild(paletteDom(dealContrastFour(localcolors, true), 1));
         localcolors = shuffleArray(localcolors);
 
         for (let i = 0; i < 2; i++) {
-          $pal.appendChild(paletteDom(dealContrastFour(localcolors), 2));
+          $pal.appendChild(paletteDom(dealContrastFour(localcolors, true), 2));
           localcolors = shuffleArray(localcolors);
         }
 
+        // bottom row of small tiles: best-effort
         for (let i = 0; i < 4 * 2; i++) {
-          $pal.appendChild(paletteDom(dealContrastFour(localcolors), 4));
+          $pal.appendChild(paletteDom(dealContrastFour(localcolors, false), 4));
           localcolors = shuffleArray(localcolors);
         }
 
@@ -1484,43 +1505,78 @@
         requestAnimationFrame(() => updateFavicon(localcolors.map(c => c.css)))
       };
 
-      // Deals 4 colors from an already-shuffled pool. Slot 1 is whatever the
-      // shuffle dealt; each later slot is drawn randomly from the 3 candidates
-      // with the strongest WCAG contrast against the tile so far, so tiles
-      // pair high-contrast colors without losing the randomness.
-      // If the pool runs dry early, already-picked colors fill the remaining
-      // seats instead of leaving undefined slots for paletteDom().
-      function dealContrastFour(pool) {
+      // Deals 4 colors from an already-shuffled pool.
+      //   strict=true (top rows): greedily maximizes AA pairs — each new
+      //     color is the one that adds the most WCAG AA (≥ 4.5:1) pairs
+      //     against the colors already in the tile, so top tiles reliably
+      //     carry more readable pairings than the bottom rows.
+      //   strict=false (bottom rows): only color 2 hard-guarantees one AA
+      //     pair against color 1; colors 3–4 are best-effort on min contrast.
+      // If the pool runs dry early, already-picked colors fill the seats.
+      function dealContrastFour(pool, strict = false) {
         const rest = [...pool];
         const picked = [];
 
         while (picked.length < 4) {
           if (!rest.length) {
-            // pool exhausted: recycle seat #1 into any remaining chairs;
-            // bail entirely only if there was nothing to deal from at all
-            // (unreachable via UI — total min 3 guarantees ≥9 colors)
             if (!picked.length) break;
             picked.push(picked[0]);
             continue;
           }
 
-          const scored = rest.map((c) => ({
-            c,
-            s:
-              picked.length === 0
-                ? Infinity
-                : Math.min(
-                    ...picked.map((p) => culori.wcagContrast(p.hex, c.hex))
-                  ),
-          }));
-          scored.sort((a, b) => b.s - a.s);
+          if (picked.length === 0) {
+            const win = rest[Math.floor(Math.random() * rest.length)];
+            picked.push(win);
+            rest.splice(rest.indexOf(win), 1);
+            continue;
+          }
 
-          const win = scored[Math.floor(Math.random() * Math.min(3, scored.length))].c;
+          let win;
+          if (strict) {
+            // pick the candidate adding the most new AA pairs
+            const scored = rest
+              .map((c) => {
+                const added = picked.filter(
+                  (p) => culori.wcagContrast(c.hex, p.hex) >= 4.5
+                ).length;
+                return { c, s: added };
+              })
+              .sort((a, b) => b.s - a.s);
+            const best = scored[0];
+            // if ties, randomize among the top equally-good picks
+            const top = scored.filter((x) => x.s === best.s);
+            win = top[Math.floor(Math.random() * top.length)].c;
+          } else {
+            const scored = rest.map((c) => ({
+              c,
+              s: Math.min(
+                ...picked.map((p) => culori.wcagContrast(p.hex, c.hex))
+              ),
+            }));
+            scored.sort((a, b) => b.s - a.s);
+            if (picked.length === 1) {
+              const aa = scored.filter((x) => x.s >= 4.5);
+              win = (aa.length ? aa : scored)[0].c;
+            } else {
+              win = scored[Math.floor(Math.random() * Math.min(3, scored.length))].c;
+            }
+          }
           picked.push(win);
           rest.splice(rest.indexOf(win), 1);
         }
 
         return picked;
+      }
+
+      // how many of a tile's 6 unique color-pairs clear WCAG AA (≥ 4.5:1)
+      function countAAPairs(colorArr) {
+        let n = 0;
+        for (let a = 0; a < 3; a++) {
+          for (let b = a + 1; b < 4; b++) {
+            if (culori.wcagContrast(colorArr[a].hex, colorArr[b].hex) >= 4.5) n++;
+          }
+        }
+        return n;
       }
 
       function paletteDom(colorArr, x = 1) {
@@ -1536,6 +1592,8 @@
           );
         }
 
+        const n = countAAPairs(colorArr);
+        $div.dataset.aa = `${n}/6`;
         return $div;
       }
 
@@ -1996,6 +2054,35 @@
       window.addEventListener("scroll", syncFooterTint, { passive: true });
       window.addEventListener("resize", syncFooterTint);
       syncFooterTint();
+
+      // instant mouse-following AA tooltip (no hover delay, no shadow)
+      const $tip = document.createElement("div");
+      $tip.className = "fp-tip";
+      document.body.appendChild($tip);
+
+      let tipTarget = null;
+      const moveTip = (e) => {
+        let el = e.target.closest
+          ? e.target.closest(".palette-sample")
+          : null;
+        if (el !== tipTarget) {
+          if (el) {
+            const half = e.clientY > window.innerHeight / 2;
+            const dark = e.clientX > window.innerWidth - 120;
+            $tip.textContent = el.dataset.aa || "";
+            $tip.classList.toggle("fp-tip--invert", dark || half);
+            $tip.style.opacity = "1";
+          } else {
+            $tip.style.opacity = "0";
+          }
+          tipTarget = el;
+        }
+        if (el) {
+          $tip.style.left = `${e.clientX + 10}px`;
+          $tip.style.top = `${e.clientY + 12}px`;
+        }
+      };
+      document.addEventListener("mousemove", moveTip, { passive: true });
     </script>
   </body>
 </html>
