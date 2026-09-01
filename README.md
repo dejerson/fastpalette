@@ -275,10 +275,9 @@ defaults:
 - the demo boots from the library's param defaults — no preset hex; the hex
   field starts as the middle swatch of that default ramp
 - the hex color and the five derived sliders (`centerHue`, `minSaturation`,
-  `minLight`, `maxSaturation`, `maxLight`) stay in two-way sync with no pin
-  toggle: editing the hex re-solves the sliders via `resolveFromColor()`;
-  dragging any slider redraws and mirrors the anchor-slot color into the
-  hex field without ever moving the sliders themselves
+  `minLight`, `maxSaturation`, `maxLight`) stay in sync; a **pin** toggle
+  locks the hex as the source of truth — when locked, the ramp is resolved
+  around that hex and the derived sliders are disabled
 - the auto best-fit anchor slot is always visible: as `(n)` appended to the
   **baseColor** label, as a hollow outline on that point in the curve preview
   and as a hollow-ring inset on that swatch in the Base Colors list
@@ -287,9 +286,23 @@ defaults:
 - page and sidebar use custom overlay scrollbars: 6px pills that fade while
   idle, brighten on hover, are draggable, and turn light over the dark
   names/footer zone
+- a fixed **top nav** bar shows the FastPalette brand icon (which mirrors the
+  current ramp's 4-swatch composition) plus a **Download SVG** button
 - palette sample tiles are dealt with a WCAG contrast bias: slot one is random
   from the shuffle, later slots are drawn from the three highest-contrast
-  candidates already on the tile
+  candidates already on the tile; the top rows are greedily optimized to
+  maximize WCAG AA pairs, and each tile's AA-pair count appears on hover
+- when the base color is **pinned**, it is kept in every tile's pool so it can
+  appear in as many tiles as possible at a random seat, only winning a seat
+  when it ties the best contrast candidate (never beating a strictly-better
+  one), with a last-resort guarantee that it lands in at least one tile
+- **Download SVG** exports one flat, Illustrator/Figma-friendly SVG of the
+  current palette: 11 equal square tiles in a curated 2-row layout (3 on top,
+  8 on the bottom), left-aligned with uniform 40px spacing and padding. Within
+  each tile the color with the most WCAG AA pairs sits in the centered square,
+  which overlaps the two corner swatches so the pairing reads at a glance;
+  every fill is an inline `#HEX`. The file is named
+  `<color-name>-<hex>-fastpalette.svg` from the base/pinned color
 
 These are demo-side overrides only; none of them change the published API.
 

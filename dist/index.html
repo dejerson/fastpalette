@@ -40,6 +40,48 @@
         font-family: "Inter", sans-serif;
         background: #202124;
         --sidebarwidth: 20rem;
+        --navheight: 3.5rem;
+      }
+
+      .topnav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--navheight);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.25rem;
+        background: #202124;
+        color: #fff;
+        border-bottom: 1px solid #3a3d42;
+        z-index: 100;
+        box-sizing: border-box;
+      }
+      .topnav__brand {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        text-decoration: none;
+        color: #fff;
+      }
+      .topnav__icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+      }
+      .topnav__icon rect {
+        shape-rendering: crispEdges;
+      }
+      .topnav__name {
+        font: 600 1rem/1 "Inter", sans-serif;
+        letter-spacing: -0.01em;
+      }
+      .topnav__actions {
+        display: flex;
+        align-items: center;
       }
 
       /* ── scrollbars ──────────────────────────────────────────────────
@@ -115,7 +157,7 @@
         color: #fff;
         order: 1;
         left: 0;
-        top: 0;
+        top: var(--navheight);
         bottom: 0;
         overflow-y: auto;
         box-sizing: border-box;
@@ -134,6 +176,7 @@
 
       .main {
         margin-left: var(--sidebarwidth);
+        margin-top: var(--navheight);
         background: #fff;
         padding: 4rem;
       }
@@ -266,6 +309,19 @@
       .palette-sample i:last-child {
         bottom: 0;
         background: var(--col-3);
+      }
+      .export__btn {
+        font: 500 0.85rem/1 "Inter", sans-serif;
+        color: #fff;
+        background: #3a3d42;
+        border: 1px solid #4a4d53;
+        border-radius: 6px;
+        padding: 8px 14px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .export__btn:hover {
+        background: #4a4d53;
       }
       .fp-tip {
         position: fixed;
@@ -731,6 +787,20 @@
   </head>
 
   <body>
+    <nav class="topnav">
+      <a class="topnav__brand" href="#" data-brand>
+        <svg class="topnav__icon" viewBox="0 0 100 100" aria-hidden="true" data-navicon>
+          <rect x="0" y="0" width="100" height="100" data-nav="0" />
+          <rect x="25" y="25" width="50" height="50" data-nav="1" />
+          <rect x="50" y="50" width="25" height="25" data-nav="2" />
+          <rect x="50" y="25" width="25" height="25" data-nav="3" />
+        </svg>
+        <span class="topnav__name">FastPalette</span>
+      </a>
+      <div class="topnav__actions">
+        <button type="button" class="export__btn" data-export-svg>Download SVG</button>
+      </div>
+    </nav>
     <article class="app">
       <section class="settings">
         <aside>
@@ -785,7 +855,6 @@
           </footer>
       </section>
       <section class="main">
-        <h1>Fast&shy;Palette</h1>
 
         <!--p>
         <mark>Fast­Palette</mark> is a function that returns an object containing
@@ -942,6 +1011,16 @@
           link.href = $can.toDataURL();
           document.head.appendChild(link);
         }
+      }
+
+      // mirror the favicon's 4-swatch composition into the top-nav brand icon
+      function updateNavIcon(hexColors) {
+        const $nav = document.querySelector("[data-navicon]");
+        if (!$nav) return;
+        hexColors.forEach((c, i) => {
+          const $r = $nav.querySelector(`[data-nav="${i}"]`);
+          if ($r) $r.setAttribute("fill", c);
+        });
       }
 
       let outputModel = 'hsl';
@@ -1476,20 +1555,38 @@
         let localcolors = [...allColors];
         $pal.innerHTML = "";
 
-        // top rows get the strictly contrast-optimized tiles
-        $pal.appendChild(paletteDom(dealContrastFour(localcolors, true), 1));
-        localcolors = shuffleArray(localcolors);
+        // when the base color is pinned, it is kept available to every tile
+        // so it can appear in as many tiles as possible, at a random seat,
+        // without ever beating out a strictly-better AA candidate.
+        const pinnedHex = pinActive && currentHex ? currentHex : null;
 
-        for (let i = 0; i < 2; i++) {
-          $pal.appendChild(paletteDom(dealContrastFour(localcolors, true), 2));
-          localcolors = shuffleArray(localcolors);
+        const dealTile = (height) => {
+          const tile = dealContrastFour(localcolors, height === 4 ? false : true, pinnedHex);
+          // random seat order for the pinned color
+          if (pinnedHex) localcolors = shuffleArray(allColors);
+          else localcolors = shuffleArray(localcolors);
+          return tile;
+        };
+        const tiles = [];
+        tiles.push(dealTile(1));
+        for (let i = 0; i < 2; i++) tiles.push(dealTile(2));
+        for (let i = 0; i < 4 * 2; i++) tiles.push(dealTile(4));
+
+        // last-resort guarantee: pinned color in at least one tile,
+        // at a random seat, when it happens to not have made any naturally
+        if (pinnedHex) {
+          const inAny = tiles.some((t) => t.some((c) => c.hex.toLowerCase() === pinnedHex.toLowerCase()));
+          if (!inAny) {
+            const target = tiles[0];
+            const seat = Math.floor(Math.random() * target.length);
+            target[seat] = allColors.find((c) => c.hex.toLowerCase() === pinnedHex.toLowerCase()) || target[seat];
+          }
         }
 
-        // bottom row of small tiles: best-effort
-        for (let i = 0; i < 4 * 2; i++) {
-          $pal.appendChild(paletteDom(dealContrastFour(localcolors, false), 4));
-          localcolors = shuffleArray(localcolors);
-        }
+        tiles.forEach((t, i) => {
+          const height = i === 0 ? 1 : i <= 2 ? 2 : 4;
+          $pal.appendChild(paletteDom(t, height));
+        });
 
         $ramp.style.setProperty(
           "background",
@@ -1502,7 +1599,11 @@
             .join(",")})`
         );
 
-        requestAnimationFrame(() => updateFavicon(localcolors.map(c => c.css)))
+        requestAnimationFrame(() => {
+          const cols = localcolors.map(c => c.css);
+          updateFavicon(cols);
+          updateNavIcon(localcolors.map(c => c.hex));
+        })
       };
 
       // Deals 4 colors from an already-shuffled pool.
@@ -1512,10 +1613,16 @@
       //     carry more readable pairings than the bottom rows.
       //   strict=false (bottom rows): only color 2 hard-guarantees one AA
       //     pair against color 1; colors 3–4 are best-effort on min contrast.
+      //   mustIncludeHex: when given (the pinned base color), the tile prefers
+      //     it whenever it's tied for the best contrast candidate (never above
+      //     a strictly-better one), so it appears in as many tiles as possible
+      //     without breaking the pairing rules. Seat order is randomized by the
+      //     caller for a random visual position.
       // If the pool runs dry early, already-picked colors fill the seats.
-      function dealContrastFour(pool, strict = false) {
+      function dealContrastFour(pool, strict = false, mustIncludeHex = null) {
         const rest = [...pool];
         const picked = [];
+        const mustKey = mustIncludeHex ? mustIncludeHex.toLowerCase() : null;
 
         while (picked.length < 4) {
           if (!rest.length) {
@@ -1543,9 +1650,14 @@
               })
               .sort((a, b) => b.s - a.s);
             const best = scored[0];
-            // if ties, randomize among the top equally-good picks
+            // among equally-best candidates, prefer the pinned color
             const top = scored.filter((x) => x.s === best.s);
-            win = top[Math.floor(Math.random() * top.length)].c;
+            const pinnedBest = mustKey
+              ? top.find((x) => x.c.hex.toLowerCase() === mustKey)
+              : null;
+            win = pinnedBest
+              ? pinnedBest.c
+              : top[Math.floor(Math.random() * top.length)].c;
           } else {
             const scored = rest.map((c) => ({
               c,
@@ -1558,7 +1670,14 @@
               const aa = scored.filter((x) => x.s >= 4.5);
               win = (aa.length ? aa : scored)[0].c;
             } else {
-              win = scored[Math.floor(Math.random() * Math.min(3, scored.length))].c;
+              // among the top 3 by min-contrast, prefer the pinned color
+              const top3 = scored.slice(0, 3);
+              const pinnedBest = mustKey
+                ? top3.find((x) => x.c.hex.toLowerCase() === mustKey)
+                : null;
+              win = pinnedBest
+                ? pinnedBest.c
+                : scored[Math.floor(Math.random() * Math.min(3, scored.length))].c;
             }
           }
           picked.push(win);
@@ -1590,6 +1709,7 @@
             `--col-${i}`,
             colorArr[i].css
           );
+          $div.dataset[`col${i}Hex`] = colorArr[i].hex;
         }
 
         const n = countAAPairs(colorArr);
@@ -1879,6 +1999,7 @@
       }
 
       let timer;
+      const colorNames = {};
       const $names = document.querySelector("[data-names]");
 
       function names(colors) {
@@ -1893,6 +2014,12 @@
           )
             .then((r) => r.json())
             .then((d) => {
+              // pair each returned name back to the requested hex, since the
+              // API may answer with a nearest named hex rather than the input
+              (d.colors || []).forEach((c, i) => {
+                const requested = hexes[i];
+                if (requested) colorNames["#" + requested.toLowerCase()] = c.name;
+              });
               $names.innerHTML = `<ol>${printColors(
                 colors.all,
                 false,
@@ -2083,6 +2210,121 @@
         }
       };
       document.addEventListener("mousemove", moveTip, { passive: true });
+
+      // ── SVG export (Illustrator / Figma friendly) ─────────────────────
+      // Reads the tiles currently on screen and emits one flat SVG that
+      // reproduces the exact on-screen tile layout: a full-width tile, two
+      // half tiles, then two rows of four quarter tiles (flex-wrap). Each
+      // tile keeps its 4-color composition (background + centered block +
+      // two corner swatches) as separate <rect>s with inline fill="#HEX", so
+      // every fill stays an independently editable color in both apps.
+      function collectTilesHex() {
+        const tiles = [];
+        document.querySelectorAll("[data-palette] .palette-sample").forEach((t) => {
+          const hex = [];
+          for (let i = 0; i < 4; i++) {
+            hex.push(t.dataset[`col${i}Hex`] || "#000000");
+          }
+          // --x is the tile height value (1 = full, 2 = half, 4 = quarter)
+          const x = parseFloat(t.style.getPropertyValue("--x")) || 1;
+          tiles.push({ hex, x });
+        });
+        return tiles;
+      }
+
+      // which of 4 colors pairs with the most other colors at WCAG AA (≥4.5:1)
+      function mostPairedIndex(hexes) {
+        let best = 0;
+        let bestN = -1;
+        for (let i = 0; i < 4; i++) {
+          let n = 0;
+          for (let j = 0; j < 4; j++) {
+            if (i !== j && culori.wcagContrast(hexes[i], hexes[j]) >= 4.5) n++;
+          }
+          if (n > bestN) {
+            bestN = n;
+            best = i;
+          }
+        }
+        return best;
+      }
+
+      // Exports one flat SVG of square tiles in a curated 2-row layout
+      // (3 tiles on top, 8 on the bottom), all rows aligned to the left with
+      // uniform horizontal + vertical spacing (G) and matching outer padding
+      // (P) for easy curation. Within each tile the color with the most WCAG
+      // AA pairs against the other three sits in the centered square, which
+      // overlaps the two corner swatches — that overlap makes the pairing
+      // visible at a glance. Every fill is an inline #HEX so each color stays
+      // independently editable in Illustrator / Figma.
+      function buildExportSvg(tiles) {
+        const S = 120; // square tile side
+        const G = 40;  // spacing between tiles / rows
+        const P = 40;  // outer padding (matches spacing)
+        const W = 2 * P + 8 * S + 7 * G;   // width held by the 8-wide bottom row
+        const H = 2 * P + 2 * S + G;       // two rows of squares + row gap
+        const r2 = (n) => n.toFixed(2);
+
+        const rowXs = (n, y) =>
+          Array.from({ length: n }, (_, i) => ({ x: P + i * (S + G), y }));
+        const topRow = rowXs(3, P);
+        const botRow = rowXs(8, P + S + G);
+
+        const parts = [`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${r2(H)}" viewBox="0 0 ${W} ${r2(H)}">`];
+        const rect = (x, y, w, h, fill) =>
+          parts.push(`<rect x="${r2(x)}" y="${r2(y)}" width="${r2(w)}" height="${r2(h)}" fill="${fill}"/>`);
+
+        tiles.forEach((t, ti) => {
+          const row = ti < 3 ? topRow : botRow;
+          const { x, y } = row[ti < 3 ? ti : ti - 3];
+          const hexes = t.hex;
+
+          // center the color that pairs with the most other colors
+          const cIdx = mostPairedIndex(hexes);
+          const others = hexes.filter((_, j) => j !== cIdx);
+          const center = hexes[cIdx];
+          const [bg, topR, botR] = others;
+
+          const half = S / 2;
+          rect(x, y, S, S, bg);                            // background (full tile)
+          rect(x + half, y, half, half, topR);            // top-right corner
+          rect(x + half, y + half, half, half, botR);     // bottom-right corner
+          rect(x + S * 0.25, y + S * 0.25, half, half, center);   // center on top (overlaps corners)
+        });
+        parts.push("</svg>");
+        return parts.join("\n");
+      }
+
+      function downloadSvg() {
+        const tiles = collectTilesHex();
+        if (!tiles.length) return;
+        const svg = buildExportSvg(tiles);
+
+        // filename: "<color-name> <hex> fastpalette.svg" based on the
+        // base (anchor / pinned) color so each export is identifyable
+        const base = pinActive && currentHex
+          ? currentHex
+          : colors.base[anchorIndex - 1]?.hex || "#000000";
+        const baseHex = base.replace("#", "").toLowerCase();
+        const name = (colorNames[base.toLowerCase()] || "color")
+          .replace(/[^\w-]+/g, "-")
+          .toLowerCase();
+        const filename = `${name}-${baseHex}-fastpalette.svg`;
+
+        const blob = new Blob([svg], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      document.querySelectorAll("[data-export-svg]").forEach((btn) => {
+        btn.addEventListener("click", downloadSvg);
+      });
     </script>
   </body>
 </html>

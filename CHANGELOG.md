@@ -6,15 +6,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Demo page: a fixed **top nav** bar with the FastPalette brand icon (which
+  mirrors the current ramp's 4-swatch composition) and a **Download SVG**
+  button.
+- Demo page: **SVG export** — one flat, Illustrator/Figma-friendly SVG of the
+  current palette. 11 equal square tiles in a curated 2-row layout (3 on top,
+  8 on the bottom), left-aligned with uniform 40px spacing and matching outer
+  padding. Within each tile the color with the most WCAG AA pairs sits in the
+  centered square, which overlaps the two corner swatches so the pairing reads
+  at a glance; every fill is an inline `#HEX`, independently editable in both
+  apps. Files are named `<color-name>-<hex>-fastpalette.svg` from the
+  base/pinned color (color names resolved from a web API when available).
+
 ### Changed
 
-- Demo page: Pin-to-Color mode is replaced by an always-on **baseColor**
-  control at the top of Settings — there is no toggle anymore. The hex field
-  and the five derived sliders (`centerHue`, `minSaturation`, `minLight`,
-  `maxSaturation`, `maxLight`) stay in two-way sync: typing a hex re-solves
-  the sliders via `resolveFromColor()`, while dragging a slider redraws and
-  mirrors the color at the anchor slot into the hex field without ever moving
-  the sliders themselves.
+- Demo page: restored a real **pin toggle** for the base color — when locked,
+  the hex is the source of truth and the ramp is resolved around it via
+  `resolveFromColor()`, with the five derived sliders disabled. The pinned
+  color is kept in every tile's pool so it appears in as many tiles as
+  possible at a random seat, only winning a seat when it ties (never beats) the
+  best contrast candidate, with a last-resort guarantee that it lands in at
+  least one tile.
+- Demo page: palette tiles are dealt with a stronger WCAG contrast bias — top
+  rows greedily maximize WCAG AA pairs; each tile's AA-pair count is shown on
+  hover.
 - Demo page: the auto best-fit anchor slot is always visible — as `(n)` in the
   baseColor label, as a hollow outline on that point in the curve preview and
   as a hollow-ring inset on that swatch in the Base Colors list.
@@ -24,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   resolved values and annotates the resolved slot.
 - Demo page: rebranded to **FastPalette** across title, meta tags, headings
   and about copy; the About block moves below the Function Call snippet and
-  the footer is hidden.
+  the footer is hidden. The main `<h1>` heading moved into the new top nav.
 - Demo page: native scrollbars are replaced with JS-drawn overlay thumbs on
   both the page and the settings sidebar — 6px pills that fade out while idle,
   brighten on hover, are draggable, and flip light once the page scrolls into
