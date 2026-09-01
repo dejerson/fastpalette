@@ -8,9 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Demo page: a fixed **top nav** bar with the FastPalette brand icon (which
-  mirrors the current ramp's 4-swatch composition) and a **Download SVG**
-  button.
+- Demo page: a fixed **top nav** bar overlaid on the current ramp's gradient
+  (the four lightest colors, muted by a dark scrim), with the FastPalette
+  brand text auto-contrasted against it and **Copy SVG** / **Download SVG**
+  actions.
 - Demo page: **SVG export** — one flat, Illustrator/Figma-friendly SVG of the
   current palette. 11 equal square tiles in a curated 2-row layout (3 on top,
   8 on the bottom), left-aligned with uniform 40px spacing and matching outer
@@ -19,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   at a glance; every fill is an inline `#HEX`, independently editable in both
   apps. Files are named `<color-name>-<hex>-fastpalette.svg` from the
   base/pinned color (color names resolved from a web API when available).
+  **Copy SVG** writes the same markup to the clipboard with `Copied` feedback
+  (falling back to `execCommand` where the clipboard API is unavailable).
 
 ### Changed
 

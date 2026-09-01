@@ -286,8 +286,9 @@ defaults:
 - page and sidebar use custom overlay scrollbars: 6px pills that fade while
   idle, brighten on hover, are draggable, and turn light over the dark
   names/footer zone
-- a fixed **top nav** bar shows the FastPalette brand icon (which mirrors the
-  current ramp's 4-swatch composition) plus a **Download SVG** button
+- a fixed **top nav** shows the current ramp's gradient (the four lightest
+  colors, muted by a dark scrim) as its backdrop, with the FastPalette brand
+  text auto-contrasted against it and **Copy SVG** / **Download SVG** actions
 - palette sample tiles are dealt with a WCAG contrast bias: slot one is random
   from the shuffle, later slots are drawn from the three highest-contrast
   candidates already on the tile; the top rows are greedily optimized to
@@ -302,7 +303,8 @@ defaults:
   each tile the color with the most WCAG AA pairs sits in the centered square,
   which overlaps the two corner swatches so the pairing reads at a glance;
   every fill is an inline `#HEX`. The file is named
-  `<color-name>-<hex>-fastpalette.svg` from the base/pinned color
+  `<color-name>-<hex>-fastpalette.svg` from the base/pinned color; **Copy SVG**
+  writes the same markup to the clipboard
 
 These are demo-side overrides only; none of them change the published API.
 
